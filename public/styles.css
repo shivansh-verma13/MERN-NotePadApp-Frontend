@@ -1,0 +1,493 @@
+body {
+  margin: 0;
+  background-color: #f6f4eb;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+  background-image: url("https://www.transparenttextures.com/patterns/notebook-dark.png");
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+header {
+  display: flex;
+  order: -1;
+  font-family: "Comic Neue", cursive;
+  letter-spacing: 2px;
+  padding-left: 20px;
+  background-color: #9be8d8;
+  color: #f8fdcf;
+  box-shadow: 0 0 5px 0 #4c4b16;
+}
+
+header>h1:hover {
+  color: #e7b10a;
+}
+
+.noteHeading {
+  font-family: "Comic Neue", cursive;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 900;
+  font-size: 2rem;
+  color: #61677a;
+}
+
+.addNote {
+  padding: 10px;
+  margin: 16px;
+  width: 20rem;
+  font-family: "Comic Neue", cursive;
+  background-color: #e7b10a;
+  box-shadow: 5px 5px 5px #ff6666;
+  animation: add 5s infinite;
+  border-radius: 5px 5px 5px 5px;
+  position: relative;
+  left: 29rem;
+  border-bottom-right-radius: 2px 20px;
+  border-bottom-left-radius: 2px 20px;
+  margin-left: 8%;
+}
+
+@keyframes add {
+  50% {
+    box-shadow: 5px 5px 5px #da3d3d;
+  }
+}
+
+.addNote>input,
+.addNote>textarea {
+  font-family: "Comic Neue", cursive;
+  width: 100%;
+  margin: 0;
+  font-size: 1rem;
+  margin: 1px;
+  background-color: #e7b10a;
+  border: 0;
+  padding-bottom: 0;
+  white-space: break-spaces;
+  word-wrap: break-word;
+  border-bottom: dashed 2px #f8fdcf;
+  border-bottom-right-radius: 12px 5px;
+  border-top-left-radius: 5px 12px;
+  resize: none;
+}
+
+.addNote>button {
+  font-family: "Comic Neue", cursive;
+  position: absolute;
+  bottom: -20px;
+  right: 20px;
+  background-color: #9be8d8;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  color: #f8fdcf;
+  box-shadow: 2px 2px 0 #4c4b16;
+}
+
+.noteContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.note {
+  padding: 10px;
+  margin: 16px;
+  width: 20rem;
+  height: auto;
+  box-sizing: content-box;
+  font-family: "Comic Neue", cursive;
+  background-color: #e7b10a;
+  box-shadow: 5px 5px 5px #9e9fa5;
+  animation: delete 5s infinite;
+  border-radius: 5px 5px 5px 5px;
+  position: relative;
+  border-bottom-right-radius: 2px 20px;
+  border-bottom-left-radius: 2px 20px;
+}
+
+@keyframes delete {
+  50% {
+    box-shadow: 5px 5px 5px #4c4b16;
+  }
+}
+
+.note>button {
+  font-family: "Comic Neue", cursive;
+
+  position: absolute;
+  bottom: -20px;
+  right: 20px;
+  background-color: #da3d3d;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 0;
+  box-shadow: 2px 2px 0 #4c4b16;
+  color: #f8fdcf;
+}
+
+.note>.editbtn {
+  font-family: "Comic Neue", cursive;
+
+  position: absolute;
+  bottom: -20px;
+  right: 80px;
+  background-color: #96B6C5;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 0;
+  box-shadow: 2px 2px 0 #4c4b16;
+  color: #f8fdcf;
+}
+
+li {
+  list-style-type: none;
+}
+
+.title {
+  box-sizing: border-box;
+  font-size: 1.5rem;
+  font-weight: 900;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.content {
+  box-sizing: border-box;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+footer {
+  display: grid;
+  grid-template-rows: 2fr 1fr;
+  grid-template-columns: 1fr;
+  text-align: center;
+  font-family: "Comic Neue", cursive;
+  font-size: 1.2rem;
+  background-image: url("https://www.transparenttextures.com/patterns/brick-wall.png");
+  background-color: #96B6C5;
+  color: #dfd7bf;
+}
+
+footer>.contact-me {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 5%;
+  padding-top: 10%;
+}
+
+/* LANDING PAGE */
+
+.landing-header {
+  display: grid;
+  grid-template-columns: 2fr 4fr;
+  grid-template-rows: 1fr;
+  font-family: "Comic Neue", cursive;
+  letter-spacing: 2px;
+  padding-left: 20px;
+  background-color: #9be8d8;
+  color: #f8fdcf;
+  box-shadow: 0 0 5px 0 #4c4b16;
+  position: relative;
+}
+
+.landing-header>h1 {
+  text-shadow: 1px 1px 1px #4c4b16;
+}
+
+.landing-header>h1:hover {
+  color: #e7b10a;
+}
+
+
+.nav-1 {
+  position: absolute;
+  right: 25%;
+  top: 10%;
+}
+
+.nav-2 {
+  position: absolute;
+  right: 13.5%;
+  top: 10%;
+}
+
+.nav-3 {
+  position: absolute;
+  top: 10%;
+  right: 5%;
+}
+
+
+.landing-heading {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 25%;
+  grid-template-rows: auto;
+  height: 100vh;
+  font-family: "Comic Neue", cursive;
+}
+
+/* Header */
+.noteBook {
+  position: relative;
+  margin: -2rem -19rem;
+  padding: 0;
+  height: 40rem;
+  width: 50rem;
+  filter: drop-shadow(10px 10px 5px #4c4b16);
+  transform: rotate(20deg);
+}
+
+.main-heading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  letter-spacing: 2px;
+  line-height: 1.5;
+  word-spacing: 2px;
+}
+
+.main-heading>span {
+  font-family: "Lilita One", cursive;
+  margin-top: -8rem;
+  padding-left: 6rem;
+  color: #4c4b16;
+  font-size: 3rem;
+  width: 75%;
+  position: relative;
+  text-shadow: 5px 5px 5px #9e9fa5;
+}
+
+.secondary-heading>span {
+  position: absolute;
+  top: 42%;
+  right: 19.5%;
+  width: 20%;
+  font-size: 2.5rem;
+  font-family: "Dancing Script", cursive;
+  line-height: 2;
+  letter-spacing: 2px;
+  text-shadow: 5px 5px 5px #9e9fa5;
+  transform: rotate(20deg);
+}
+
+.get-start-button {
+  width: auto;
+  padding: 2px;
+  position: absolute;
+  bottom: 7%;
+  left: 7.5%;
+}
+
+/* Features Section */
+
+.features-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  width: 100%;
+  padding: 10%;
+  margin-top: 0;
+  gap: 10%;
+  background-image: url("https://www.transparenttextures.com/patterns/always-grey.png");
+}
+
+.feature-heading {
+  font-family: "Lilita One", cursive;
+  width: 30%;
+  text-align: center;
+  margin-top: -10px;
+  margin-left: -25px;
+  font-size: 2rem;
+}
+
+.feature-text {
+  font-family: "Noto Sans", sans-serif;
+  width: 30%;
+  text-align: center;
+  margin-top: -50px;
+  margin-left: -20px;
+  font-size: 1.2rem;
+  font-weight: 100;
+}
+
+/* Carousel Section*/
+
+.carousel {
+  padding-top: 5%;
+  padding-bottom: 5%;
+  display: flex;
+  justify-content: space-evenly;
+  gap: 5%;
+  width: 100%;
+  height: 100vh;
+}
+
+.carousel-content {
+  position: relative;
+}
+
+.carousel-content>img {
+  border-radius: 50%;
+  width: 25rem;
+  height: 35rem;
+  margin-right: -10%;
+  text-align: center;
+  filter: drop-shadow(5px 5px 5px #4c4b16);
+  transition: width 1s, height 1s;
+  transition-timing-function: ease;
+}
+
+.carousel-content>img:hover {
+  width: 28rem;
+  height: 38rem;
+}
+
+.prevCarousel,
+.nextCarousel {
+  padding-top: 20%;
+  filter: drop-shadow(5px 5px 5px #4c4b16);
+}
+
+.carousel-content>p {
+  position: absolute;
+  text-align: center;
+  bottom: 25%;
+  left: 25%;
+  width: 50%;
+  color: #fff;
+  font-family: "Lilita One", cursive;
+  font-size: 1.5rem;
+  letter-spacing: 0;
+  text-shadow: 5px 5px 5px #4c4b16;
+}
+
+.carousel-content>p:hover {
+  color: #e7b10a;
+}
+
+/* Get Started Section */
+
+.get-started {
+  background-image: url("https://www.transparenttextures.com/patterns/always-grey.png");
+  width: 100%;
+  height: 100vh;
+  text-align: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.get-started-card {
+  position: relative;
+}
+
+/* .get-started-card>img {
+  transition: width 1s, height 1s;
+  transition-timing-function: ease;
+} */
+
+/* .get-started-card>img:hover {
+  width: 75rem;
+  height: auto;
+} */
+
+.note-get-started {
+  margin-top: -8%;
+  /* margin-bottom: 5%; */
+  width: 70rem;
+  height: auto;
+  filter: drop-shadow(10px 10px 10px #4c4b16);
+}
+
+.get-started-content {
+  text-align: center;
+  position: absolute;
+  top: 18%;
+  left: 40%;
+  width: 20%;
+  font-family: "Lilita One", cursive;
+  line-height: 1.5;
+  filter: drop-shadow(5px 5px 2px #9e9fa5);
+}
+
+.get-started-content>h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-weight: 900;
+}
+
+.content-span {
+  color: #e7b10a;
+  text-shadow: 5px 5px 2px #4c4b16;
+}
+
+.get-started-content>p {
+  font-family: "Noto Sans", sans-serif;
+  font-size: 1rem;
+  width: 50%;
+  margin-left: 23%;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+/* Sign Up Section */
+.sign-up-content {
+  text-align: center;
+  position: absolute;
+  top: 18%;
+  left: 40%;
+  width: 20%;
+  font-family: "Lilita One", cursive;
+  line-height: 1.5;
+  filter: drop-shadow(5px 5px 2px #9e9fa5);
+}
+
+.sign-up-content>h1 {
+  font-size: 2rem;
+  /* margin-bottom: 5rem; */
+  font-weight: 900;
+}
+
+.custom-form-tags>input {
+  width: 100%;
+  border: 1px solid #000;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 5px;
+  color: #000;
+  font-family: "Lilita One", cursive;
+  font-size: 1rem;
+  font-weight: lighter;
+}
+
+.note-heading {
+  font-family: "Lilita One", cursive;
+  margin: 2rem;
+  font-size: 3rem;
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.MuiInput-underline::after {
+  border-bottom-color: #000 !important;
+}
