@@ -25,7 +25,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src/components/AddNote.jsx src/components/Dialog.jsx src/components/Note.jsx src/components/App.jsx src/components/AddNote.test.jsx src/components/Dialog.test.jsx --max-warnings 0"
   },
   "eslintConfig": {
     "extends": [

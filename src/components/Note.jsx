@@ -38,12 +38,13 @@ function Note(notes) {
           noteID={notes.listItem._id.toString()}
         />
       )}
-      <div className="note">
-        <li className="title">{notes.listItem.title}</li>
-        <li className="content">{notes.listItem.content}</li>
+      <li className="note">
+        <h2 className="title">{notes.listItem.title}</h2>
+        <p className="content">{notes.listItem.content}</p>
         <Zoom in={true}>
           <button
             className="editbtn"
+            aria-label={"Edit " + notes.listItem.title}
             type="submit"
             onClick={() => {
               setHideDialog(false);
@@ -62,10 +63,10 @@ function Note(notes) {
           </button>
         </Zoom>
         <Zoom in={true}>
-          <button
-            type="submit"
+          <button aria-label={"Delete " + notes.listItem.title}
+            type="button"
             onClick={() => {
-              notes.deleteItem(notes.listItem._id.toString());
+              if (window.confirm("Delete this note? This cannot be undone.")) notes.deleteItem(notes.listItem._id.toString());
             }}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
@@ -79,7 +80,7 @@ function Note(notes) {
             </span>
           </button>
         </Zoom>
-      </div>
+      </li>
     </>
   );
 }

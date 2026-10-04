@@ -39,6 +39,7 @@ function App() {
     } catch (error) {
       console.log(error.message);
       toast.error("Failed to Update Note", { id: "update-note" });
+      throw error;
     }
   }
 
@@ -72,7 +73,7 @@ function App() {
   }, []);
 
   return (
-    <div>
+    <div className="notes-workspace">
       <Heading />
       <h1 className="note-heading">
         <Avatar sx={{ mr: 2, bgcolor: "#80BCBD" }}>
@@ -82,12 +83,12 @@ function App() {
       </h1>
       <AddNote addNote={addNote} />
       <div>
-        <h1 className="noteHeading">{listItems[0] && "My Notes"}</h1>
+        <h2 className="noteHeading">{listItems[0] && "My Notes"}</h2>
         <ul className="noteContainer">
           {listItems.map((listItem, index) => {
             return (
               <Note
-                key={index}
+                key={listItem._id}
                 id={index}
                 listItem={listItem}
                 deleteItem={deleteItem}

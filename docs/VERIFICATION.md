@@ -1,0 +1,7 @@
+# Verification — first Notes slice
+
+npm ci passed (1,552 packages). Four component tests across two suites passed: failed create preserves draft; pending duplicate submits blocked; success clears draft only after completion; blank drafts blocked; failed edit keeps modal/draft open and retry closes only after success. Lint passed for changed components/tests with zero warnings. Production build passed (149.66KB main JS gzip); the existing CRA toolchain reports deprecated Babel preset, old Browserslist data and Node fs.F_OK warnings. No whole-project dependency audit or typecheck claim is made.
+
+Actual browser used the production build with a synthetic in-memory HTTP API fixture, not real MongoDB/authentication. Verified failed create, retained title/content, successful retry, populated edit dialog, edit save and UI reload. No captured console warnings/errors in that observed journey. Desktop width 1280 had no overflow; at 375px the legacy fixed-offset composer initially overflowed to 833px. After scoped layout changes, 375px width had no overflow (document scrollWidth 360). Physical devices and real authentication/persistence remain unverified. Screenshots show actual synthetic browser checks, not fabricated users or a deployed release.
+
+Backend has six mock/model-contract and JWT tests; see paired repository. The next slice must correct cookie/environment and CSRF design, verify real MongoDB persistence, then continue the workspace design and grounded summaries. No AI integration is claimed yet.
