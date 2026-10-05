@@ -26,7 +26,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "eslint src/components/AddNote.jsx src/components/Dialog.jsx src/components/Note.jsx src/components/App.jsx src/components/AddNote.test.jsx src/components/Dialog.test.jsx --max-warnings 0"
+    "lint": "eslint src/components/AddNote.jsx src/components/Dialog.jsx src/components/Note.jsx src/components/App.jsx src/components/SignUp.jsx src/components/AddNote.test.jsx src/components/Dialog.test.jsx src/components/App.test.jsx src/components/SignUp.test.jsx src/context/AuthContext.jsx src/context/AuthContext.test.jsx src/helpers/api-client.js src/helpers/api-communicators.js src/index.js --max-warnings 0"
   },
   "eslintConfig": {
     "extends": [

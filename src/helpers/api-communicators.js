@@ -1,7 +1,7 @@
-import axios from "axios";
+import { api } from "./api-client";
 
 export const userLogin = async (username, password) => {
-  const res = await axios.post("/user/login", { username, password });
+  const res = await api.post("/user/login", { username, password });
   if (res.status !== 200) {
     throw new Error("Could Not Log In");
   }
@@ -10,7 +10,7 @@ export const userLogin = async (username, password) => {
 };
 
 export const userSignUp = async (name, username, password) => {
-  const res = await axios.post("/user/register", { name, username, password });
+  const res = await api.post("/user/register", { name, username, password });
   if (res.status !== 201) {
     throw new Error("Unable to Register User");
   }
@@ -19,7 +19,7 @@ export const userSignUp = async (name, username, password) => {
 };
 
 export const userLogout = async () => {
-  const res = await axios.get("/user/logout");
+  const res = await api.post("/user/logout");
   if (res.status !== 200) {
     throw new Error("User Logout Failed");
   }
@@ -28,7 +28,7 @@ export const userLogout = async () => {
 };
 
 export const checkAuth = async () => {
-  const res = await axios.get("/user/auth");
+  const res = await api.get("/user/auth");
   if (res.status !== 200) {
     throw new Error("User Is not Authenticated");
   }
@@ -37,7 +37,7 @@ export const checkAuth = async () => {
 };
 
 export const createNote = async (title, content) => {
-  const res = await axios.post("/notes/newNote", { title, content });
+  const res = await api.post("/notes/newNote", { title, content });
   if (res.status !== 201) {
     throw new Error("Note Creation Failed");
   }
@@ -46,7 +46,7 @@ export const createNote = async (title, content) => {
 };
 
 export const getAllUserNotes = async () => {
-  const res = await axios.get("/notes/all-notes");
+  const res = await api.get("/notes/all-notes");
   if (res.status !== 200) {
     throw new Error("No Notes Available");
   }
@@ -55,7 +55,7 @@ export const getAllUserNotes = async () => {
 };
 
 export const deleteUserNote = async (noteID) => {
-  const res = await axios.delete(`/notes/deleteNote/${noteID}`);
+  const res = await api.delete(`/notes/deleteNote/${noteID}`);
   if (res.status !== 200) {
     throw new Error("Unable to Delete Note");
   }
@@ -64,7 +64,7 @@ export const deleteUserNote = async (noteID) => {
 };
 
 export const updateUserNote = async (content, noteID) => {
-  const res = await axios.patch("/notes/updateNote", { content, noteID });
+  const res = await api.patch("/notes/updateNote", { content, noteID });
   if (res.status !== 200) {
     throw new Error("Unable to Update Note");
   }
