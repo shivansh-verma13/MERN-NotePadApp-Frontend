@@ -4,12 +4,8 @@ import App from "./components/App";
 import LandingPage from "./components/LandingPage";
 import SignUp from "./components/SignUp";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import axios from "axios";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
-
-axios.defaults.baseURL = "http://localhost:4040/notepad";
-axios.defaults.withCredentials = true;
 
 const router = createBrowserRouter([
   {

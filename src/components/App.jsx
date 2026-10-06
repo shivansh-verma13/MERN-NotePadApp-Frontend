@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Footer from "./Footer";
 import Heading from "./Heading";
 import Note from "./Note";
@@ -39,6 +39,7 @@ function App() {
     } catch (error) {
       console.log(error.message);
       toast.error("Failed to Update Note", { id: "update-note" });
+      throw error;
     }
   }
 
@@ -51,28 +52,35 @@ function App() {
   };
 
   useEffect(() => {
-    if (!auth?.isLoggedIn && !auth?.username.length > 0) {
-      navigate("/auth");
+    if (auth?.status === "anonymous") {
+      navigate("/auth", { replace: true });
     }
-  }, [auth?.isLoggedIn, auth?.username.length, navigate]);
+  }, [auth?.status, navigate]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    if (!auth?.isLoggedIn) return;
+    let active = true;
     const getUserNotes = async () => {
       try {
         toast.loading("Loading User Note's...", { id: "notes" });
         const response = await getAllUserNotes();
+        if (!active) return;
         setListItem(response.userNotes);
         toast.success("Loaded User's Note Successfully", { id: "notes" });
       } catch (error) {
-        console.error(error.message);
+        if (!active) return;
         toast.error("Loading User Note Failed", { id: "notes" });
       }
     };
     getUserNotes();
-  }, []);
+    return () => { active = false; };
+  }, [auth?.isLoggedIn]);
+
+  if (auth?.status === "error") return <main><p role="alert">Unable to check your session. Your notes have not been loaded.</p><button onClick={auth.refreshAuth}>Retry session check</button></main>;
+  if (!auth?.isLoggedIn) return <main><p role="status">Checking your session…</p></main>;
 
   return (
-    <div>
+    <div className="notes-workspace">
       <Heading />
       <h1 className="note-heading">
         <Avatar sx={{ mr: 2, bgcolor: "#80BCBD" }}>
@@ -82,12 +90,12 @@ function App() {
       </h1>
       <AddNote addNote={addNote} />
       <div>
-        <h1 className="noteHeading">{listItems[0] && "My Notes"}</h1>
+        <h2 className="noteHeading">{listItems[0] && "My Notes"}</h2>
         <ul className="noteContainer">
           {listItems.map((listItem, index) => {
             return (
               <Note
-                key={index}
+                key={listItem._id}
                 id={index}
                 listItem={listItem}
                 deleteItem={deleteItem}
