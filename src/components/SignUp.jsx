@@ -7,6 +7,14 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+function accountError(error, fallback) {
+  if (error?.response?.status !== 429) return fallback;
+  const seconds = Number(error.response.headers?.["retry-after"]);
+  return Number.isInteger(seconds) && seconds > 0 && seconds <= 900
+    ? `Too many account attempts. Try again in ${seconds} seconds.`
+    : "Too many account attempts. Please wait before trying again.";
+}
+
 function SignUp() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -39,7 +47,7 @@ function SignUp() {
           toast.success("Signed In User Successfully", { id: "register" });
           navigate("/notes");
         } catch (error) {
-          setErrorMessage("Could not create your account. Check your details and try again.");
+          setErrorMessage(accountError(error, "Could not create your account. Check your details and try again."));
           toast.error("User Signing In Failed", { id: "register" });
         }
       } else if (isRegisterOrLogin === "login") {
@@ -49,7 +57,7 @@ function SignUp() {
           toast.success("Logged In User Successfully", { id: "login" });
           navigate("/notes");
         } catch (error) {
-          setErrorMessage("Could not log in. Check your details and try again.");
+          setErrorMessage(accountError(error, "Could not log in. Check your details and try again."));
           toast.error("User Logging In Failed", { id: "login" });
         }
       }
