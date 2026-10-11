@@ -47,7 +47,9 @@ function SignUp() {
           toast.success("Signed In User Successfully", { id: "register" });
           navigate("/notes");
         } catch (error) {
-          setErrorMessage(accountError(error, "Could not create your account. Check your details and try again."));
+          setErrorMessage(error?.response?.status === 409
+            ? "Username is unavailable. Choose another username and try again."
+            : accountError(error, "Could not create your account. Check your details and try again."));
           toast.error("User Signing In Failed", { id: "register" });
         }
       } else if (isRegisterOrLogin === "login") {

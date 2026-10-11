@@ -12,6 +12,26 @@ jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
 jest.mock("react-hot-toast", () => ({ loading: jest.fn(), success: jest.fn(), error: jest.fn() }));
 afterEach(() => jest.clearAllMocks());
 
+test("registration explains a username conflict, retains fields and allows a corrected retry", async () => {
+  const register = jest.fn().mockRejectedValueOnce({ response: { status: 409, data: { message: "private DB details" } } }).mockResolvedValueOnce(undefined);
+  useAuth.mockReturnValue({ register, isLoggedIn: false, username: "" });
+  render(<SignUp />);
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Synthetic Owner" } });
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic" } });
+  fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test password" } });
+  fireEvent.submit(screen.getByRole("form", { name: "Create account" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Choose another username");
+  expect(screen.getByRole("alert")).not.toHaveTextContent("private DB details");
+  expect(screen.getByLabelText("Name")).toHaveValue("Synthetic Owner");
+  expect(screen.getByLabelText("Username")).toHaveValue("synthetic");
+  expect(screen.getByLabelText("Password")).toHaveValue("test password");
+  expect(mockNavigate).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic-new" } });
+  fireEvent.submit(screen.getByRole("form", { name: "Create account" }));
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/notes"));
+  expect(register).toHaveBeenLastCalledWith("Synthetic Owner", "synthetic-new", "test password");
+});
+
 test.each(["register", "login"])("%s explains throttling and preserves the draft", async mode => {
   const fail = jest.fn().mockRejectedValue({ response: { status: 429, headers: { "retry-after": "60" } } });
   useAuth.mockReturnValue({ register: fail, login: fail, isLoggedIn: false, username: "" });
