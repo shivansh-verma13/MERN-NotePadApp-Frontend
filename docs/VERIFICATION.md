@@ -33,3 +33,16 @@ no automatic live index operation. Browser inventory empty, Chrome/in-app
 unavailable: desktop/mobile conflict/retry/CRUD and cookie/throttle flows remain
 unverified. Audits unchanged: backend 17 (3 critical), frontend 106 (5 critical).
 Frontend production build passed: 150.51 kB main JS gzip; existing CRA/Babel/Browserslist/Node warnings remain.
+
+## October 12, 2026 — frontend critical dependency repair
+Completed the bounded frontend dependency slice: locked compatible Axios 1.20.0, React Router DOM 6.30.6, Babel traverse 7.29.10, form-data 3.0.5/4.0.6, proxy-addr 2.0.8, shell-quote 1.12.0 and websocket-driver 0.7.5. No force upgrades, overrides, API/data-model changes or CRA migration. Full npm audit changed from 106 findings (5 critical/37 high) to 98 (0 critical/33 high/51 moderate/14 low). This is not a clean audit; remaining findings still block preview.
+
+Verification: fresh npm ci (1,557 packages), expanded lint, all 18 tests in six suites and production build passed on Windows Node 24.14.0/npm 11.9.0. Four new tests exercise the actual installed Axios Node HTTP adapter against a disposable synthetic loopback server: JSON/request header, 409/429 and Retry-After, timeout and cancellation. The other 14 tests use mocked API/context/router dependencies. No hosted API/database/provider or production secrets. Build main JS gzip is 165.57 kB (previous 150.51 kB). Initial test adapter mapping recursed; corrected to requireActual and full checks passed. detectOpenHandles identified CRA's existing Babel warning timer, not the local server. Existing CRA/Babel/Browserslist/Node deprecations remain. No typecheck script exists. Backend source/dependencies unchanged; its prior passing integration and zero audit are historical, not rerun locally in this frontend slice.
+
+Before editing, both feature heads matched remotes and existing push/PR CI passed; verified GitHub account matched repository-local noreply identity. Browser inventory was empty; Chrome and in-app creation unavailable. Exact unverified flows: desktop/mobile registration conflict/corrected retry, authentication/persisted CRUD/logout, browser cookie/CORS acceptance and throttling guidance. Node HTTP adapter tests do not verify browser XHR, cookies or responsive UI.
+
+Review: https://github.com/shivansh-verma13/MERN-NotePadApp-Frontend/pull/1 and https://github.com/shivansh-verma13/NotepadAppBackend/pull/1 . Source commit, post-push CI and latest PR/checkpoint links are recorded in the retained run CHECKPOINT.md and PR bodies.
+
+Deployment: none; production/default branches and legacy data unchanged. Preserve paired deployment contract and API collision handling before owner-approved audited/backed-up paused-registration index rollout. Remaining gates: 98 frontend dependency findings, unavailable browser journey, hosted proxy/shared-worker limiter protection, owner-approved live username index rollout and approved synthetic hosted HTTPS/database configuration. Notes stays active; no other reconstruction.
+
+Next concrete task: remediate remaining compatible frontend high-severity toolchain paths, then time-box a Proposal/Challenge/Decision for CRA replacement if pinned dependency chains require incompatible changes; reverify lint/tests/build before workspace redesign.
