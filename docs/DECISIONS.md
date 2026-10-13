@@ -1,5 +1,15 @@
 # Decisions
 
+## Frontend toolchain replacement boundary — October 13, 2026
+
+Proposal: finish compatible security patches now, then replace CRA with Vite in a separate bounded slice while retaining React 18, MUI, React Router, the existing Express API and note/auth behavior. Preserve the static hosting output contract and explicitly map the public API URL setting; migrate tests/lint only with equivalent behavioral coverage.
+
+Challenge: retaining CRA and patching supported ranges is the smallest reversible change, but its pinned SVGO 1/nth-check 1, resolve-url-loader/PostCSS 7, webpack-dev-middleware 5 and Workbox/rollup-plugin-terser/serialize-javascript chains prevent a clean audit. A custom webpack/Jest setup preserves CRA conventions but makes this project responsible for the same large dependency/configuration surface. Vite requires deliberate entrypoint, environment, asset, test and SPA fallback checks; it is not a reason to rewrite business logic or deploy immediately.
+
+Evidence: the original locked tree still audits at 98 findings (33 high, zero critical); a focused compatible refresh initially reached 90/21 high. The broader parent-refresh candidate increased reported findings to 114/61 high and was discarded before verification. npm's suggested react-scripts 0.0.0 replacement is unusable. React's official retirement notice confirms CRA has no active maintainers and names Vite as a build-tool migration option: https://react.dev/blog/2025/02/14/sunsetting-create-react-app . Vite's official setup requirements must be checked against Node-22 CI and the intended host: https://vite.dev/guide/ . No claim that the remaining toolchain advisories are all shipped runtime vulnerabilities.
+
+Decision: retain only verified compatible patches in this run; choose Vite for the next build-tool slice rather than blanket overrides or a custom webpack fork. Keep the API/environment/deployment contract documented in both repositories. Require fresh locked install, lint, all existing behavior tests, production build, public asset/SPA fallback checks and available desktop/mobile browser journeys before treating migration as complete. Reverse the patch commit if supported CI or build fails. Reconsider Vite if a short spike cannot preserve the API URL, assets, static output and tests without broad product changes; no data migration or hosting switch is authorized. This five-minute decision records alternatives and gates, not a migration completion claim.
+
 ## Notes slice 1: refactor the save boundary
 Proposal: retain React 18/MUI and Express/Mongoose, keep endpoint and response contracts, replace whole-user read/mutate/save with owner-scoped atomic Mongo operators and preserve failed UI drafts.
 Challenge: a Vite/TypeScript rebuild would simplify the aging CRA toolchain, but it delays fixing data loss and mixes API migration with UI replacement. A separate notes collection supports pagination better but requires an explicit data migration.
