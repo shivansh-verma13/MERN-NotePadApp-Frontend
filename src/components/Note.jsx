@@ -52,6 +52,8 @@ function Note(notes) {
             }}
             onMouseOver={handleMouseOverEditBtn}
             onMouseOut={handleMouseOutEditBtn}
+            onFocus={handleMouseOverEditBtn}
+            onBlur={handleMouseOutEditBtn}
             style={{
               backgroundColor: isMouseOverEditBtn ? "#80BCBD" : "#96B6C5",
               cursor: "pointer",
@@ -70,6 +72,8 @@ function Note(notes) {
             }}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
+            onFocus={handleMouseOver}
+            onBlur={handleMouseOut}
             style={{
               backgroundColor: isMouseOver ? "#B70404" : "#da3d3d",
               cursor: "pointer",

@@ -1,5 +1,13 @@
 # Decisions
 
+## Vite implementation refinement — October 14, 2026
+
+Proposal: implement the already-selected bounded Vite migration with Vite 8.3.4/React plugin 6.1.2, retain Jest 30.5.2 with explicit Babel configuration and expose only the original public API URL setting.
+
+Challenge: Vitest would share Vite transforms and avoid a separate Babel test path, but requires changing test globals/mocks/environment behavior. Standalone Jest preserves all 18 existing behavior tests and minimizes this slice; its remaining YAML/formatting dependency advisories need separate review. Retaining CRA was previously rejected on pinned dependency/audit evidence. Current React lint plugin supports through ESLint 9, so forcing unsupported ESLint 10 peers is not a sound fix.
+
+Decision: retain Jest and use explicit lint configuration plus HTTP toolchain checks. Node 22.12+/24 satisfies official Vite requirements. Keep port 3000, REACT_APP_API_URL, root assets and build/; disable automatic VITE_* exposure. Dev globals are verified through the actual Vite bootstrap, production substitutions through an in-memory synthetic build. Public Netlify fallback is declared with API proxy precedence documented; no hosted configuration changed. Vite uses its modern production browser target, so legacy browser compilation parity is not claimed. Reverse the frontend revision if supported CI, browser/auth flows or approved hosting fail; revisit Vitest if tool-only advisories cannot be safely repaired. Backend/API/persistence architecture and rollout order are unchanged. Sources: https://vite.dev/guide/ ; https://vite.dev/config/shared-options ; https://jestjs.io/docs/getting-started .
+
 ## Frontend toolchain replacement boundary — October 13, 2026
 
 Proposal: finish compatible security patches now, then replace CRA with Vite in a separate bounded slice while retaining React 18, MUI, React Router, the existing Express API and note/auth behavior. Preserve the static hosting output contract and explicitly map the public API URL setting; migrate tests/lint only with equivalent behavioral coverage.
