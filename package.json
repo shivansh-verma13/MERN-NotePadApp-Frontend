@@ -11,13 +11,13 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.15.0"
+    "react-router-dom": "7.18.4"
   },
   "scripts": {
     "start": "vite",
     "build": "vite build",
     "test": "jest",
-    "lint": "eslint src/components/AddNote.jsx src/components/Dialog.jsx src/components/Note.jsx src/components/App.jsx src/components/SignUp.jsx src/components/AddNote.test.jsx src/components/Dialog.test.jsx src/components/App.test.jsx src/components/SignUp.test.jsx src/context/AuthContext.jsx src/context/AuthContext.test.jsx src/helpers/api-client.js src/helpers/api-client.test.js src/helpers/api-communicators.js src/index.jsx vite.config.mjs eslint.config.mjs babel.config.cjs jest.config.cjs scripts/verify-toolchain.mjs --max-warnings 0",
+    "lint": "eslint src/components/AddNote.jsx src/components/Dialog.jsx src/components/Note.jsx src/components/App.jsx src/components/SignUp.jsx src/components/AddNote.test.jsx src/components/Dialog.test.jsx src/components/App.test.jsx src/components/SignUp.test.jsx src/context/AuthContext.jsx src/context/AuthContext.test.jsx src/helpers/api-client.js src/helpers/api-client.test.js src/helpers/api-communicators.js src/index.jsx src/routes.jsx src/routes.test.jsx jest.environment.cjs vite.config.mjs eslint.config.mjs babel.config.cjs jest.config.cjs scripts/verify-toolchain.mjs --max-warnings 0",
     "dev": "vite",
     "preview": "vite preview",
     "test:toolchain": "node scripts/verify-toolchain.mjs"
