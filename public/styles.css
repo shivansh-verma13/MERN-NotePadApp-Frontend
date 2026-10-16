@@ -507,3 +507,15 @@ footer>.contact-me {
 .notes-workspace footer .contact-me { flex-wrap: wrap; gap: 1rem; }
 .notes-workspace [role="alert"] { color: #9c2929; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .notes-workspace *, .notes-workspace *::before, .notes-workspace *::after { animation: none !important; transition: none !important; } }
+
+/* Search shares the bounded workspace layout and remains usable on narrow screens. */
+.notes-workspace .notes-library { max-width: 64rem; margin: 0 auto; padding: 0 1rem; }
+.notes-workspace .notes-search { max-width: 36rem; margin: 0 auto 1rem; }
+.notes-workspace .notes-search label { display: block; margin-bottom: .5rem; font-weight: 700; }
+.notes-workspace .notes-search-controls { display: flex; flex-wrap: wrap; gap: .75rem; }
+.notes-workspace .notes-search input { box-sizing: border-box; flex: 1 1 12rem; min-width: 0; width: 100%; min-height: 44px; padding: .7rem; border: 1px solid #85968c; border-radius: 6px; color: #25344a; background: white; font: inherit; }
+.notes-workspace .notes-search button, .notes-workspace .notes-library > div > button { min-height: 44px; padding: .6rem 1rem; border: 1px solid #285c50; border-radius: 6px; background: #285c50; color: white; font: inherit; cursor: pointer; }
+.notes-workspace .notes-search p { font-size: .9rem; line-height: 1.5; }
+.notes-workspace .notes-library > p, .notes-workspace .notes-library > div { text-align: center; }
+.notes-workspace .notes-library .noteContainer { padding: 0; }
+.notes-workspace .notes-search button:disabled { cursor: default; }
