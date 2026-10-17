@@ -1,70 +1,16 @@
-# Getting Started with Create React App
+# Notes — frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Shivansh Verma's notes application, paired with NotepadAppBackend. The upgrade/notes-v1 branch retains the original React 18/MUI business logic with Vite build/dev tooling. Failed saves retain drafts, duplicate submissions are blocked, labels/pending/errors are accessible, deletion asks for confirmation and stable note IDs preserve component identity. Search titles and content in your loaded private library, with result counts, clear, loading/retry and empty/no-match states. Search stays in page memory and successful saves update the filtered results. This is an upgrade branch, not a verified hosted release.
 
-## Available Scripts
+## Setup and checks
+Node 22.12+ (Node 22 line) or Node 24+, npm ci, npm start, then open http://localhost:3000. The source defaults to same-origin /notepad; for local separate ports set REACT_APP_API_URL=http://localhost:4040/notepad in ignored .env.local and run the paired backend. Signed cookies and the request header accompany API calls; session restoration finishes before notes redirect/fetch. See [local integration and paired deployment contract](docs/LOCAL_INTEGRATION.md) and [Vite configuration/static hosting](docs/TOOLCHAIN.md). Do not copy production credentials into frontend source.
 
-In the project directory, you can run:
+npm test; npm run lint; npm run build; npm run test:toolchain. Latest local verification: fresh install, lint, all 30 Vitest behavior tests, production build and synthetic dev/build/preview contract checks passed. Full and runtime-only audits report zero findings after replacing Jest/Istanbul with Vitest 5.0.5/jsdom 28.1.0; production dependency versions are unchanged. Unsupported ESLint 9 remains a maintenance gate; see docs/VERIFICATION.md for scope. Plain JavaScript has no typecheck command. Output stays in build/ with assets/ modules and a Netlify SPA fallback declaration. Configure the API proxy before the fallback; hosted behavior and browser flows remain unverified. No preview deployed.
 
-### `npm start`
+## Product release and AI
+The durable release criteria in BACKLOG.md cover correct private CRUD, a polished searchable notes workspace and one opt-in summary over authorized selected notes. AI is planned, not implemented or mocked as a live feature. Provider keys will stay server-side. No user counts, performance gains, live URL or hiring-impact metrics are claimed.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Continuity and recovery
+UPGRADE_LOG.md and docs/DECISIONS.md record changes/next tasks. Keep the original default branch recoverable; do not deploy over its existing site or migrate data without authorization. The paired backend docs/automation contains the recurring workflow's runner source. Screenshots capture synthetic local UI verification. Real temporary local MongoDB HTTP integration passed with synthetic accounts. The browser tool exposes no browser in this run; visual/cookie behavior for this auth slice and the hosted journey remain unverified.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+![Actual synthetic mobile save verification](docs/screenshots/mobile-save.png)

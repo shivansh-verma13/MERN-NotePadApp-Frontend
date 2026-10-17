@@ -1,0 +1,79 @@
+import { vi } from "vitest";
+import React from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import SignUp from "./SignUp";
+import { useAuth } from "../context/AuthContext";
+
+vi.mock("../context/AuthContext", () => ({ useAuth: vi.fn() }));
+vi.mock("./Heading", () => ({ default: () => null }));
+vi.mock("./Footer", () => ({ default: () => null }));
+const { mockNavigate } = vi.hoisted(() => ({ mockNavigate: vi.fn() }));
+vi.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
+vi.mock("react-hot-toast", () => ({ default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() } }));
+afterEach(() => vi.clearAllMocks());
+
+test("registration explains a username conflict, retains fields and allows a corrected retry", async () => {
+  const register = vi.fn().mockRejectedValueOnce({ response: { status: 409, data: { message: "private DB details" } } }).mockResolvedValueOnce(undefined);
+  useAuth.mockReturnValue({ register, isLoggedIn: false, username: "" });
+  render(<SignUp />);
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Synthetic Owner" } });
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic" } });
+  fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test password" } });
+  fireEvent.submit(screen.getByRole("form", { name: "Create account" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Choose another username");
+  expect(screen.getByRole("alert")).not.toHaveTextContent("private DB details");
+  expect(screen.getByLabelText("Name")).toHaveValue("Synthetic Owner");
+  expect(screen.getByLabelText("Username")).toHaveValue("synthetic");
+  expect(screen.getByLabelText("Password")).toHaveValue("test password");
+  expect(mockNavigate).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic-new" } });
+  fireEvent.submit(screen.getByRole("form", { name: "Create account" }));
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/notes"));
+  expect(register).toHaveBeenLastCalledWith("Synthetic Owner", "synthetic-new", "test password");
+});
+
+test.each(["register", "login"])("%s explains throttling and preserves the draft", async mode => {
+  const fail = vi.fn().mockRejectedValue({ response: { status: 429, headers: { "retry-after": "60" } } });
+  useAuth.mockReturnValue({ register: fail, login: fail, isLoggedIn: false, username: "" });
+  render(<SignUp />);
+  if (mode === "login") fireEvent.click(screen.getByRole("button", { name: /Already Registered/ }));
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic" } });
+  fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test password" } });
+  fireEvent.submit(screen.getByRole("form"));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Try again in 60 seconds");
+  expect(screen.getByLabelText("Username")).toHaveValue("synthetic");
+  expect(screen.getByLabelText("Password")).toHaveValue("test password");
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test("registration blocks duplicate submits and retains fields after a failure", async () => {
+  let reject;
+  const register = vi.fn(() => new Promise((_resolve, fail) => { reject = fail; }));
+  useAuth.mockReturnValue({ register, isLoggedIn: false, username: "" });
+  render(<SignUp />);
+  fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Synthetic Owner" } });
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic" } });
+  fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test password" } });
+  const form = screen.getByRole("form", { name: "Create account" });
+  fireEvent.submit(form); fireEvent.submit(form);
+  expect(register).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole("button", { name: "Please wait…" })).toBeDisabled();
+  reject(new Error("offline"));
+  expect(await screen.findByRole("alert")).toHaveTextContent("try again");
+  expect(screen.getByLabelText("Username")).toHaveValue("synthetic");
+  expect(screen.getByRole("button", { name: "Sign Up" })).toBeEnabled();
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test("successful login navigates to notes", async () => {
+  const login = vi.fn().mockResolvedValue(undefined);
+  useAuth.mockReturnValue({ login, isLoggedIn: false, username: "" });
+  render(<SignUp />);
+  fireEvent.click(screen.getByRole("button", { name: /Already Registered/ }));
+  fireEvent.change(screen.getByLabelText("Username"), { target: { value: "synthetic" } });
+  fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test password" } });
+  fireEvent.submit(screen.getByRole("form", { name: "Log in" }));
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/notes"));
+  expect(login).toHaveBeenCalledWith("synthetic", "test password");
+});

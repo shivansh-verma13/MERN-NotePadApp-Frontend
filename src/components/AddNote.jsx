@@ -1,103 +1,28 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import Zoom from "@mui/material/Zoom";
-import toast from "react-hot-toast";
 import { createNote } from "../helpers/api-communicators";
-
-function AddNote(props) {
-  const [note, setNote] = useState({
-    title: "",
-    content: "",
-  });
-
-  const [isClicked, setClicked] = useState(false);
-
-  const [isMouseOver, setMouseOver] = useState(false);
-
-  function handleClick() {
-    setClicked(true);
-  }
-
-  function handleNote(event) {
-    const { name, value } = event.target;
-
-    setNote((prevValue) => {
-      return {
-        ...prevValue,
-        [name]: value,
-      };
-    });
-  }
-
-  const handleNoteCreation = async () => {
+export default function AddNote({addNote}) {
+  const [note,setNote]=useState({title:"",content:""});
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
+  const pending=useRef(false);
+  async function save(event) {
+    event.preventDefault();
+    if(pending.current) return;
+    if(!note.title.trim() || !note.content.trim()) {setError("Add a title and some content before saving.");return;}
+    pending.current=true;setBusy(true);setError("");
     try {
-      toast.loading("Creating your Note...", { id: "note-creation" });
-      const response = await createNote(note.title, note.content);
-      props.addNote(response);
-      toast.success("Note Created Successfully", { id: "note-creation" });
-    } catch (error) {
-      console.log(error.message);
-      toast.error("Note Creation Failed", { id: "note-creation" });
-    }
-  };
-
-  function handleMouseOver() {
-    setMouseOver(true);
+      const response=await createNote(note.title,note.content);
+      addNote(response);setNote({title:"",content:""});
+    } catch(error) {setError(error.response?.data?.message || "Your note was not saved. Your draft is still here; please retry.");}
+    finally {pending.current=false;setBusy(false);}
   }
-
-  function handleMouseOut() {
-    setMouseOver(false);
-  }
-
-  return (
-    <div className="addNote">
-      {isClicked && (
-        <input
-          autoComplete="off"
-          className="title"
-          type="text"
-          name="title"
-          placeholder="Title"
-          onChange={handleNote}
-          value={note.title}
-        ></input>
-      )}
-
-      <textarea
-        autoComplete="off"
-        className="content"
-        type="text"
-        name="content"
-        placeholder="Take a note..."
-        row={isClicked ? "3" : "1"}
-        onChange={handleNote}
-        onClick={handleClick}
-        value={note.content}
-      ></textarea>
-      <Zoom in={isClicked && true}>
-        <button
-          type="submit"
-          onClick={() => {
-            handleNoteCreation();
-            setNote({
-              title: "",
-              content: "",
-            });
-          }}
-          onMouseOver={handleMouseOver}
-          onMouseOut={handleMouseOut}
-          style={{
-            backgroundColor: isMouseOver ? "#91C8E4" : "#9BE8D8",
-            cursor: "pointer",
-          }}
-        >
-          <span>
-            <AddIcon />
-          </span>
-        </button>
-      </Zoom>
-    </div>
-  );
+  return <form className="addNote" onSubmit={save} aria-label="Create note" aria-busy={busy}>
+    <label htmlFor="note-title">Title</label>
+    <input id="note-title" className="title" name="title" value={note.title} maxLength={120} disabled={busy} onChange={event=>setNote({...note,title:event.target.value})} />
+    <label htmlFor="note-content">Content</label>
+    <textarea id="note-content" className="content" name="content" rows={3} value={note.content} maxLength={20000} disabled={busy} onChange={event=>setNote({...note,content:event.target.value})} />
+    {error && <p role="alert">{error}</p>}
+    <button type="submit" disabled={busy} aria-label={busy ? "Saving note" : "Save note"}><AddIcon aria-hidden="true" />{busy ? "Saving…" : "Save"}</button>
+  </form>;
 }
-
-export default AddNote;

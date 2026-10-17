@@ -1,108 +1,29 @@
-import * as React from "react";
+import React, { useRef, useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
-
-export default function UpdateNoteDialog(props) {
-  const handleClose = () => {
-    props.setOpen(false);
-  };
-
-  return (
-    <React.Fragment>
-      <Dialog
-        open={props.open}
-        onClose={handleClose}
-        PaperProps={{
-          component: "form",
-          onSubmit: (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const formJson = Object.fromEntries(formData.entries());
-            const content = formJson.content;
-            props.updateNote(content, props.noteID);
-            handleClose();
-          },
-        }}
-        sx={{ fontFamily: "Lilita One, cursive" }}
-      >
-        <DialogTitle
-          sx={{
-            bgcolor: "#96B6C5",
-            color: "#f8fdcf",
-            fontFamily: "Lilita One, cursive",
-            fontSize: "1.4rem",
-          }}
-        >
-          Update Note's Content
-        </DialogTitle>
-        <DialogContent
-          sx={{
-            bgcolor: "#e7b10a",
-          }}
-        >
-          <DialogContentText
-            sx={{ fontFamily: "Lilita One, cursive", fontWeight: "bold" }}
-          >
-            <span style={{ fontSize: "1.2rem" }}>TITLE:</span>{" "}
-            <span style={{ fontWeight: "lighter" }}>{props.title}</span>
-          </DialogContentText>
-          <DialogContentText
-            sx={{ fontFamily: "Lilita One, cursive", fontWeight: "bold" }}
-          >
-            <span style={{ fontSize: "1.2rem" }}>CONTENT:</span>{" "}
-            <span style={{ fontWeight: "lighter" }}>{props.text}</span>
-          </DialogContentText>
-          <TextField
-            autoComplete="off"
-            autoFocus
-            required
-            margin="dense"
-            id="content"
-            name="content"
-            label="Update Content"
-            type="text"
-            fullWidth
-            variant="standard"
-            helperText="Please enter your new content"
-            sx={{ fontFamily: "Lilita One, cursive" }}
-            InputLabelProps={{
-              style: { color: "#000", fontFamily: "Lilita One, cursive" },
-            }}
-            InputProps={{
-              style: {
-                color: "#000",
-                "&:focus": {
-                  borderBottomColor: "#000",
-                  fontFamily: "Lilita One, cursive",
-                },
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ bgcolor: "#96B6C5" }}>
-          <Button
-            onClick={handleClose}
-            sx={{ color: "#B70404", fontFamily: "Lilita One, cursive" }}
-            endIcon={<CancelIcon />}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            sx={{ color: "#11235A", fontFamily: "Lilita One, cursive" }}
-            endIcon={<CheckCircleIcon />}
-          >
-            Update
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
-  );
+export default function UpdateNoteDialog({open,setOpen,text,title,updateNote,noteID}) {
+  const [content,setContent]=useState(text);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
+  const pending=useRef(false);
+  const close=()=>{if(!pending.current)setOpen(false);};
+  async function save(event) {
+    event.preventDefault();if(pending.current)return;
+    if(!content.trim()){setError("Add content before saving.");return;}
+    pending.current=true;setBusy(true);setError("");
+    try {await updateNote(content,noteID);setOpen(false);}
+    catch {setError("Your changes were not saved. Keep editing or retry.");}
+    finally {pending.current=false;setBusy(false);}
+  }
+  return <Dialog open={open} onClose={close} aria-labelledby="edit-note-title" fullWidth maxWidth="sm" PaperProps={{component:"form",onSubmit:save}}>
+    <DialogTitle id="edit-note-title">Edit: {title}</DialogTitle>
+    <DialogContent><TextField autoFocus fullWidth multiline minRows={4} label="Content" value={content} disabled={busy} inputProps={{maxLength:20000}} onChange={event=>setContent(event.target.value)} />
+      {error && <p role="alert">{error}</p>}
+    </DialogContent>
+    <DialogActions><Button onClick={close} disabled={busy}>Cancel</Button><Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button></DialogActions>
+  </Dialog>;
 }

@@ -1,57 +1,52 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import {
-  checkAuth,
-  userLogin,
-  userLogout,
-  userSignUp,
-} from "../helpers/api-communicators";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { checkAuth, userLogin, userLogout, userSignUp } from "../helpers/api-communicators";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [username, setUsername] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [status, setStatus] = useState("loading");
+  const generation = useRef(0);
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const data = await checkAuth();
-        if (data) {
-          setUsername(data.name);
-          setIsLoggedIn(true);
-        }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-    checkAuthStatus();
+  const refreshAuth = useCallback(async () => {
+    const attempt = ++generation.current;
+    setStatus("loading");
+    try {
+      const data = await checkAuth();
+      if (attempt !== generation.current) return;
+      setUsername(data.name);
+      setStatus("authenticated");
+    } catch (error) {
+      if (attempt !== generation.current) return;
+      setUsername("");
+      setStatus(error.response?.status === 401 ? "anonymous" : "error");
+    }
   }, []);
 
+  useEffect(() => {
+    refreshAuth();
+    return () => { generation.current += 1; };
+  }, [refreshAuth]);
+
   const login = async (username, password) => {
+    generation.current += 1;
     const data = await userLogin(username, password);
-    if (data) {
-      setUsername(data.name);
-      setIsLoggedIn(true);
-    }
+    setUsername(data.name);
+    setStatus("authenticated");
   };
-
   const register = async (name, username, password) => {
+    generation.current += 1;
     const data = await userSignUp(name, username, password);
-    if (data) {
-      setUsername(data.userName);
-      setIsLoggedIn(true);
-    }
+    setUsername(data.userName);
+    setStatus("authenticated");
   };
-
   const logout = async () => {
     await userLogout();
+    generation.current += 1;
     setUsername("");
-    setIsLoggedIn(false);
-    window.location.reload();
+    setStatus("anonymous");
   };
 
-  const value = { username, isLoggedIn, login, register, logout };
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ username, status, isLoggedIn: status === "authenticated", refreshAuth, login, register, logout }}>{children}</AuthContext.Provider>;
 };
-
 export const useAuth = () => useContext(AuthContext);
