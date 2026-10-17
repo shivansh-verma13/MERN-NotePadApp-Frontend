@@ -17,7 +17,7 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       parserOptions: { ecmaFeatures: { jsx: true } },
-      globals: { ...globals.browser, ...globals.node, ...globals.jest },
+      globals: { ...globals.browser, ...globals.node, ...globals.vitest },
     },
     plugins: { react, "react-hooks": hooks, "jsx-a11y": jsxA11y },
     settings: { react: { version: "detect" } },

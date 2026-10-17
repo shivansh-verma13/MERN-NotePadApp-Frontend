@@ -1,18 +1,19 @@
+import { vi } from "vitest";
 import React from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import App from "./App";
 import { useAuth } from "../context/AuthContext";
 import { createNote, deleteUserNote, getAllUserNotes, updateUserNote } from "../helpers/api-communicators";
 
-jest.mock("../context/AuthContext", () => ({ useAuth: jest.fn() }));
-jest.mock("../helpers/api-communicators", () => ({ getAllUserNotes: jest.fn(), createNote: jest.fn(), deleteUserNote: jest.fn(), updateUserNote: jest.fn() }));
-jest.mock("./Heading", () => () => null);
-jest.mock("./Footer", () => () => null);
-const mockNavigate = jest.fn();
-jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
-jest.mock("react-hot-toast", () => ({ loading: jest.fn(), success: jest.fn(), error: jest.fn() }));
-afterEach(() => jest.clearAllMocks());
+vi.mock("../context/AuthContext", () => ({ useAuth: vi.fn() }));
+vi.mock("../helpers/api-communicators", () => ({ getAllUserNotes: vi.fn(), createNote: vi.fn(), deleteUserNote: vi.fn(), updateUserNote: vi.fn() }));
+vi.mock("./Heading", () => ({ default: () => null }));
+vi.mock("./Footer", () => ({ default: () => null }));
+const { mockNavigate } = vi.hoisted(() => ({ mockNavigate: vi.fn() }));
+vi.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
+vi.mock("react-hot-toast", () => ({ default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() } }));
+afterEach(() => vi.clearAllMocks());
 
 const fixtures = [
   { _id: "synthetic-a", title: "Travel plans", content: "Book the train" },
@@ -90,7 +91,7 @@ test("filtered edit and deletion retain note IDs and recompute matches from save
   getAllUserNotes.mockResolvedValueOnce({ userNotes: fixtures });
   updateUserNote.mockResolvedValueOnce({ notes: fixtures.map(note => note._id === "synthetic-b" ? { ...note, content: "Buy milk" } : note) });
   deleteUserNote.mockResolvedValueOnce({ userNotes: fixtures.filter(note => note._id !== "synthetic-c") });
-  const confirm = jest.spyOn(window, "confirm").mockReturnValue(true);
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
   render(<App />);
   fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "trail" } });
   fireEvent.click(screen.getByRole("button", { name: "Edit Groceries" }));
@@ -114,7 +115,7 @@ test("notes wait for session restoration without redirect or a premature API cal
   expect(getAllUserNotes).not.toHaveBeenCalled();
 });
 test("session failure shows retry; anonymous session redirects", () => {
-  const refreshAuth = jest.fn();
+  const refreshAuth = vi.fn();
   useAuth.mockReturnValue({ status: "error", isLoggedIn: false, username: "", refreshAuth });
   const { rerender } = render(<App />);
   expect(screen.getByRole("alert")).toHaveTextContent("Unable to check your session");

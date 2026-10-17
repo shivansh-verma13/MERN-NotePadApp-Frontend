@@ -1,10 +1,10 @@
-/** @jest-environment node */
+/** @vitest-environment node */
 import { createServer } from "http";
 import { api } from "./api-client";
 
 // Exercise the installed Axios HTTP adapter against a disposable synthetic API.
 // This does not establish browser cookie acceptance or a live Notes backend.
-jest.mock("axios", () => jest.requireActual("axios/dist/node/axios.cjs"));
+// Node environment selects Axios's real HTTP adapter without a module mock.
 
 let server;
 let baseURL;

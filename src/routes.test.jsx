@@ -1,16 +1,17 @@
+import { vi } from "vitest";
 import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { routes } from "./routes";
 import { AuthProvider } from "./context/AuthContext";
 import { checkAuth, getAllUserNotes, userLogin, userLogout } from "./helpers/api-communicators";
 
-jest.mock("./helpers/api-communicators", () => ({
-  checkAuth: jest.fn(), getAllUserNotes: jest.fn(),
-  userLogin: jest.fn(), userLogout: jest.fn(), userSignUp: jest.fn(),
+vi.mock("./helpers/api-communicators", () => ({
+  checkAuth: vi.fn(), getAllUserNotes: vi.fn(),
+  userLogin: vi.fn(), userLogout: vi.fn(), userSignUp: vi.fn(),
 }));
-jest.mock("react-hot-toast", () => ({ loading: jest.fn(), success: jest.fn(), error: jest.fn() }));
+vi.mock("react-hot-toast", () => ({ default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 
 let router;
 function open(path) {
@@ -19,7 +20,7 @@ function open(path) {
   return router;
 }
 beforeEach(() => {
-  jest.resetAllMocks();
+  vi.resetAllMocks();
   getAllUserNotes.mockResolvedValue({ userNotes: [] });
 });
 afterEach(() => { cleanup(); router?.dispose(); });

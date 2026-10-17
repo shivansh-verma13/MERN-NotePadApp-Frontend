@@ -1,15 +1,16 @@
+import { vi } from "vitest";
 import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { checkAuth, userLogin, userLogout } from "../helpers/api-communicators";
 
-jest.mock("../helpers/api-communicators", () => ({ checkAuth: jest.fn(), userLogin: jest.fn(), userLogout: jest.fn(), userSignUp: jest.fn() }));
+vi.mock("../helpers/api-communicators", () => ({ checkAuth: vi.fn(), userLogin: vi.fn(), userLogout: vi.fn(), userSignUp: vi.fn() }));
 function Harness() {
   const auth = useAuth();
   return <><p role="status">{auth.status}:{auth.username}</p><button onClick={auth.refreshAuth}>Retry</button><button onClick={() => auth.login("synthetic", "test password")}>Login</button><button onClick={auth.logout}>Logout</button></>;
 }
-afterEach(() => jest.resetAllMocks());
+afterEach(() => vi.resetAllMocks());
 
 test("session stays loading until authentication resolves", async () => {
   let resolve;

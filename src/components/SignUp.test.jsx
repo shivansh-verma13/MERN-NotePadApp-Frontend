@@ -1,19 +1,20 @@
+import { vi } from "vitest";
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import SignUp from "./SignUp";
 import { useAuth } from "../context/AuthContext";
 
-jest.mock("../context/AuthContext", () => ({ useAuth: jest.fn() }));
-jest.mock("./Heading", () => () => null);
-jest.mock("./Footer", () => () => null);
-const mockNavigate = jest.fn();
-jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
-jest.mock("react-hot-toast", () => ({ loading: jest.fn(), success: jest.fn(), error: jest.fn() }));
-afterEach(() => jest.clearAllMocks());
+vi.mock("../context/AuthContext", () => ({ useAuth: vi.fn() }));
+vi.mock("./Heading", () => ({ default: () => null }));
+vi.mock("./Footer", () => ({ default: () => null }));
+const { mockNavigate } = vi.hoisted(() => ({ mockNavigate: vi.fn() }));
+vi.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
+vi.mock("react-hot-toast", () => ({ default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() } }));
+afterEach(() => vi.clearAllMocks());
 
 test("registration explains a username conflict, retains fields and allows a corrected retry", async () => {
-  const register = jest.fn().mockRejectedValueOnce({ response: { status: 409, data: { message: "private DB details" } } }).mockResolvedValueOnce(undefined);
+  const register = vi.fn().mockRejectedValueOnce({ response: { status: 409, data: { message: "private DB details" } } }).mockResolvedValueOnce(undefined);
   useAuth.mockReturnValue({ register, isLoggedIn: false, username: "" });
   render(<SignUp />);
   fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Synthetic Owner" } });
@@ -33,7 +34,7 @@ test("registration explains a username conflict, retains fields and allows a cor
 });
 
 test.each(["register", "login"])("%s explains throttling and preserves the draft", async mode => {
-  const fail = jest.fn().mockRejectedValue({ response: { status: 429, headers: { "retry-after": "60" } } });
+  const fail = vi.fn().mockRejectedValue({ response: { status: 429, headers: { "retry-after": "60" } } });
   useAuth.mockReturnValue({ register: fail, login: fail, isLoggedIn: false, username: "" });
   render(<SignUp />);
   if (mode === "login") fireEvent.click(screen.getByRole("button", { name: /Already Registered/ }));
@@ -48,7 +49,7 @@ test.each(["register", "login"])("%s explains throttling and preserves the draft
 
 test("registration blocks duplicate submits and retains fields after a failure", async () => {
   let reject;
-  const register = jest.fn(() => new Promise((_resolve, fail) => { reject = fail; }));
+  const register = vi.fn(() => new Promise((_resolve, fail) => { reject = fail; }));
   useAuth.mockReturnValue({ register, isLoggedIn: false, username: "" });
   render(<SignUp />);
   fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Synthetic Owner" } });
@@ -66,7 +67,7 @@ test("registration blocks duplicate submits and retains fields after a failure",
 });
 
 test("successful login navigates to notes", async () => {
-  const login = jest.fn().mockResolvedValue(undefined);
+  const login = vi.fn().mockResolvedValue(undefined);
   useAuth.mockReturnValue({ login, isLoggedIn: false, username: "" });
   render(<SignUp />);
   fireEvent.click(screen.getByRole("button", { name: /Already Registered/ }));
