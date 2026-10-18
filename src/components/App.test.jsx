@@ -126,3 +126,137 @@ test("session failure shows retry; anonymous session redirects", () => {
   expect(mockNavigate).toHaveBeenCalledWith("/auth", { replace: true });
   expect(getAllUserNotes).not.toHaveBeenCalled();
 });
+
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
+  return { promise, resolve, reject };
+}
+
+test("a delayed create prevents overlapping delete/edit and cannot restore a later deletion", async () => {
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({ userNotes: fixtures });
+  const creation = deferred();
+  createNote.mockReturnValueOnce(creation.promise);
+  const added = { _id: "synthetic-d", title: "Budget", content: "Expenses" };
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  deleteUserNote.mockResolvedValueOnce({ userNotes: [...fixtures.slice(1), added] });
+  render(<App />);
+  await screen.findByRole("searchbox");
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: added.title } });
+  fireEvent.change(screen.getByLabelText("Content"), { target: { value: added.content } });
+  fireEvent.submit(screen.getByRole("form", { name: "Create note" }));
+  fireEvent.submit(screen.getByRole("form", { name: "Create note" }));
+  const remove = screen.getByRole("button", { name: "Delete Travel plans" });
+  expect(remove).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Edit Groceries" })).toBeDisabled();
+  expect(screen.getByText(/Please wait before changing another note/)).toHaveTextContent("Saving note");
+  fireEvent.click(remove);
+  expect(deleteUserNote).not.toHaveBeenCalled();
+  expect(updateUserNote).not.toHaveBeenCalled();
+  expect(confirm).not.toHaveBeenCalled();
+  expect(createNote).toHaveBeenCalledTimes(1);
+  // Search stays usable while persistence is pending.
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Travel" } });
+  await act(async () => creation.resolve({ notes: [...fixtures, added] }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete Travel plans" }));
+  await waitFor(() => expect(screen.getByText(/0 of 3 notes shown/)).toBeVisible());
+  expect(deleteUserNote).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+  expect(screen.queryByRole("heading", { name: "Travel plans" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Budget" })).toBeVisible();
+  confirm.mockRestore();
+});
+
+test("a pending delete blocks creation and other note writes; failure unlocks a retained draft for retry", async () => {
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({ userNotes: fixtures });
+  const deletion = deferred();
+  deleteUserNote.mockReturnValueOnce(deletion.promise).mockResolvedValueOnce({ userNotes: fixtures.slice(1) });
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  render(<App />);
+  await screen.findByRole("searchbox");
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Retained draft" } });
+  fireEvent.change(screen.getByLabelText("Content"), { target: { value: "Not yet saved" } });
+  fireEvent.click(screen.getByRole("button", { name: "Delete Travel plans" }));
+  expect(screen.getByRole("button", { name: "Save note" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Delete Groceries" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Edit Groceries" })).toBeDisabled();
+  fireEvent.submit(screen.getByRole("form", { name: "Create note" }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete Groceries" }));
+  expect(createNote).not.toHaveBeenCalled();
+  expect(deleteUserNote).toHaveBeenCalledTimes(1);
+  await act(async () => deletion.reject(new Error("Synthetic outage")));
+  expect(screen.getByRole("heading", { name: "Travel plans" })).toBeVisible();
+  expect(screen.getByLabelText("Title")).toHaveValue("Retained draft");
+  expect(screen.getByLabelText("Content")).toHaveValue("Not yet saved");
+  expect(screen.getByRole("button", { name: "Save note" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "Delete Travel plans" }));
+  await waitFor(() => expect(screen.queryByRole("heading", { name: "Travel plans" })).not.toBeInTheDocument());
+  confirm.mockRestore();
+});
+
+test("pending edits block overlapping writes and a failed edit retains content and releases the guard", async () => {
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({ userNotes: fixtures });
+  const editing = deferred();
+  updateUserNote.mockReturnValueOnce(editing.promise).mockResolvedValueOnce({ notes: fixtures });
+  render(<App />);
+  await screen.findByRole("searchbox");
+  const createForm = screen.getByRole("form", { name: "Create note" });
+  const createButton = within(createForm).getByRole("button");
+  const deleteButton = screen.getByRole("button", { name: "Delete Travel plans" });
+  fireEvent.click(screen.getByRole("button", { name: "Edit Groceries" }));
+  const dialog = await screen.findByRole("dialog");
+  fireEvent.change(within(dialog).getByLabelText("Content"), { target: { value: "Keep my changes" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+  fireEvent.submit(within(dialog).getByRole("button", { name: /Saving/ }).closest("form"));
+  expect(deleteButton).toBeDisabled();
+  expect(createButton).toBeDisabled();
+  fireEvent.submit(createForm);
+  fireEvent.click(deleteButton);
+  expect(createNote).not.toHaveBeenCalled();
+  expect(deleteUserNote).not.toHaveBeenCalled();
+  expect(updateUserNote).toHaveBeenCalledTimes(1);
+  expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeDisabled();
+  await act(async () => editing.reject(new Error("Synthetic outage")));
+  expect(within(dialog).getByRole("alert")).toHaveTextContent("Keep editing or retry");
+  expect(within(dialog).getByLabelText("Content")).toHaveValue("Keep my changes");
+  expect(deleteButton).toBeEnabled();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(updateUserNote).toHaveBeenCalledTimes(2);
+});
+
+test.each(["before", "after"])("an older session's response arriving %s the newer mutation cannot overwrite it or release its guard", async (order) => {
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({ userNotes: fixtures }).mockResolvedValueOnce({ userNotes: [] });
+  const oldCreation = deferred();
+  const newCreation = deferred();
+  createNote.mockReturnValueOnce(oldCreation.promise).mockReturnValueOnce(newCreation.promise);
+  const { rerender } = render(<App />);
+  await screen.findByRole("searchbox");
+  function submit(title) {
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: title } });
+    fireEvent.change(screen.getByLabelText("Content"), { target: { value: "Synthetic content" } });
+    fireEvent.submit(screen.getByRole("form", { name: "Create note" }));
+  }
+  submit("Old owner draft");
+  useAuth.mockReturnValue({ status: "authenticated", isLoggedIn: true, username: "Other synthetic owner" });
+  rerender(<App />);
+  await screen.findByText(/No notes yet/);
+  submit("New owner draft");
+  if (order === "before") {
+    await act(async () => oldCreation.resolve({ notes: fixtures }));
+  }
+  expect(screen.queryByRole("heading", { name: "Travel plans" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Saving note" })).toBeDisabled();
+  expect(createNote).toHaveBeenCalledTimes(2);
+  await act(async () => newCreation.resolve({ notes: [{ _id: "new-owner-note", title: "New owner draft", content: "Synthetic content" }] }));
+  if (order === "after") {
+    await act(async () => oldCreation.resolve({ notes: fixtures }));
+  }
+  expect(screen.queryByRole("heading", { name: "Travel plans" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "New owner draft" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Save note" })).toBeEnabled();
+});

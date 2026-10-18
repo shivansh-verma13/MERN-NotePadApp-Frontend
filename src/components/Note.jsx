@@ -36,6 +36,7 @@ function Note(notes) {
           title={notes.listItem.title}
           updateNote={notes.updateNote}
           noteID={notes.listItem._id.toString()}
+          disabled={notes.disabled}
         />
       )}
       <li className="note">
@@ -46,6 +47,7 @@ function Note(notes) {
             className="editbtn"
             aria-label={"Edit " + notes.listItem.title}
             type="submit"
+            disabled={notes.disabled}
             onClick={() => {
               setHideDialog(false);
               setOpen(true);
@@ -67,6 +69,7 @@ function Note(notes) {
         <Zoom in={true}>
           <button aria-label={"Delete " + notes.listItem.title}
             type="button"
+            disabled={notes.disabled}
             onClick={() => {
               if (window.confirm("Delete this note? This cannot be undone.")) notes.deleteItem(notes.listItem._id.toString());
             }}

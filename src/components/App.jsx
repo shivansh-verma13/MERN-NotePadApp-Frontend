@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Footer from "./Footer";
 import Heading from "./Heading";
 import Note from "./Note";
@@ -8,6 +8,7 @@ import { Avatar } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
+  createNote,
   deleteUserNote,
   getAllUserNotes,
   updateUserNote,
@@ -18,6 +19,9 @@ function App() {
   const [query, setQuery] = useState("");
   const [notesStatus, setNotesStatus] = useState("loading");
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [mutation, setMutation] = useState("");
+  const pendingMutation = useRef(null);
+  const session = useRef(null);
   const auth = useAuth();
   const navigate = useNavigate();
   const search = query.trim().toLowerCase();
@@ -25,14 +29,36 @@ function App() {
     note.title.toLowerCase().includes(search) || note.content.toLowerCase().includes(search)
   );
 
+  async function mutate(label, request, responseKey) {
+    // A ref closes the same-event gap before disabled controls render.
+    if (!session.current) throw new Error("Session changed.");
+    if (pendingMutation.current) throw new Error("Wait for the current note change to finish.");
+    const operation = { session: session.current };
+    pendingMutation.current = operation;
+    setMutation(label);
+    try {
+      const response = await request();
+      if (session.current !== operation.session) throw new Error("Session changed.");
+      setListItem(response[responseKey]);
+      return response;
+    } finally {
+      if (pendingMutation.current === operation) {
+        pendingMutation.current = null;
+        setMutation("");
+      }
+    }
+  }
+
+  function saveNote(title, content) {
+    return mutate("Saving note…", () => createNote(title, content), "notes");
+  }
+
   async function deleteItem(noteID) {
     try {
       toast.loading("Deleting a Note...", { id: "delete-note" });
-      const response = await deleteUserNote(noteID);
-      setListItem(response.userNotes);
+      await mutate("Deleting note…", () => deleteUserNote(noteID), "userNotes");
       toast.success("Deleted a Note Successfully", { id: "delete-note" });
     } catch (error) {
-      console.log(error.message);
       toast.error("Note Deletion Failed", { id: "delete-note" });
     }
   }
@@ -40,11 +66,9 @@ function App() {
   async function updateNote(content, noteID) {
     try {
       toast.loading("Updating the Note...", { id: "update-note" });
-      const response = await updateUserNote(content, noteID);
-      setListItem(response.notes);
+      await mutate("Updating note…", () => updateUserNote(content, noteID), "notes");
       toast.success("Updated Note Successfully", { id: "update-note" });
     } catch (error) {
-      console.log(error.message);
       toast.error("Failed to Update Note", { id: "update-note" });
       throw error;
     }
@@ -54,10 +78,6 @@ function App() {
     return str && str.length > 0 ? str[0].toUpperCase() : "";
   };
 
-  const addNote = (response) => {
-    setListItem(response.notes);
-  };
-
   useEffect(() => {
     if (auth?.status === "anonymous") {
       navigate("/auth", { replace: true });
@@ -65,6 +85,9 @@ function App() {
   }, [auth?.status, navigate]);
 
   useEffect(() => {
+    session.current = {};
+    pendingMutation.current = null;
+    setMutation("");
     setListItem([]);
     setQuery("");
     setNotesStatus("loading");
@@ -85,7 +108,7 @@ function App() {
       }
     };
     getUserNotes();
-    return () => { active = false; };
+    return () => { active = false; session.current = null; pendingMutation.current = null; };
   }, [auth?.isLoggedIn, auth?.username, loadAttempt]);
 
   if (auth?.status === "error") return <main><p role="alert">Unable to check your session. Your notes have not been loaded.</p><button onClick={auth.refreshAuth}>Retry session check</button></main>;
@@ -100,7 +123,8 @@ function App() {
         </Avatar>{" "}
         Welcome, {auth && auth?.username ? auth?.username : ""}
       </h1>
-      {notesStatus === "ready" && <AddNote addNote={addNote} />}
+      {notesStatus === "ready" && <AddNote saveNote={saveNote} disabled={Boolean(mutation)} />}
+      {mutation && <p role="status" aria-live="polite">{mutation} Please wait before changing another note.</p>}
       <section aria-labelledby="my-notes-heading" className="notes-library">
         <h2 id="my-notes-heading" className="noteHeading">My Notes</h2>
         {notesStatus === "loading" && <p role="status">Loading your notes…</p>}
@@ -130,6 +154,7 @@ function App() {
                 listItem={listItem}
                 deleteItem={deleteItem}
                 updateNote={updateNote}
+                disabled={Boolean(mutation)}
               />
             );
           })}
