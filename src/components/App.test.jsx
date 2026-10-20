@@ -81,7 +81,7 @@ test("creation keeps the filter while counting the saved note from the API respo
   fireEvent.click(screen.getByRole("button", { name: "Save note" }));
   await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 of 4 notes shown"));
   expect(screen.getByRole("searchbox")).toHaveValue("train");
-  expect(createNote).toHaveBeenCalledWith("Budget", "Expenses");
+  expect(createNote).toHaveBeenCalledWith("Budget", "Expenses", expect.stringMatching(/^\d{13}\.[a-f\d-]{36}$/i));
   fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
   expect(screen.getByRole("heading", { name: "Budget" })).toBeVisible();
 });
@@ -259,4 +259,24 @@ test.each(["before", "after"])("an older session's response arriving %s the newe
   expect(screen.queryByRole("heading", { name: "Travel plans" })).not.toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "New owner draft" })).toBeVisible();
   expect(screen.getByRole("button", { name: "Save note" })).toBeEnabled();
+});
+
+test('workspace forwards the same create key after an uncertain save and applies the replayed library', async () => {
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({userNotes:fixtures});
+  const saved={_id:'synthetic-retry-note',title:'Retry draft',content:'Synthetic body'};
+  createNote.mockRejectedValueOnce(new Error('synthetic timeout after commit')).mockResolvedValueOnce({notes:[...fixtures,saved]});
+  render(<App />);
+  await screen.findByRole('searchbox');
+  fireEvent.change(screen.getByLabelText('Title'),{target:{value:saved.title}});
+  fireEvent.change(screen.getByLabelText('Content'),{target:{value:saved.content}});
+  fireEvent.submit(screen.getByRole('form',{name:'Create note'}));
+  await screen.findByRole('alert');
+  const first=createNote.mock.calls[0];
+  expect(first[2]).toMatch(/^\d{13}\.[a-f\d-]{36}$/i);
+  fireEvent.submit(screen.getByRole('form',{name:'Create note'}));
+  await screen.findByRole('heading',{name:saved.title});
+  expect(createNote.mock.calls).toEqual([first,first]);
+  expect(screen.getAllByRole('heading',{name:saved.title})).toHaveLength(1);
+  expect(screen.getByLabelText('Content')).toHaveValue('');
 });

@@ -57,3 +57,15 @@ test("a cancelled request rejects without waiting for the API", async () => {
   controller.abort();
   await expect(request).rejects.toMatchObject({ code: "ERR_CANCELED" });
 });
+
+test('create helper transmits the retry key through the real Axios HTTP adapter', async () => {
+  const {createNote}=await import('./api-communicators');
+  const previousURL=api.defaults.baseURL;
+  const previousProxy=api.defaults.proxy;
+  api.defaults.baseURL=baseURL;api.defaults.proxy=false;
+  try {
+    const createKey='1800000000000.11111111-1111-4111-8111-111111111111';
+    await createNote('Synthetic','Fixture',createKey);
+    expect(JSON.parse(received.body)).toEqual({title:'Synthetic',content:'Fixture',createKey});
+  } finally {api.defaults.baseURL=previousURL;api.defaults.proxy=previousProxy;}
+});

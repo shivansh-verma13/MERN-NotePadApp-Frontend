@@ -36,8 +36,8 @@ export const checkAuth = async () => {
   return data;
 };
 
-export const createNote = async (title, content) => {
-  const res = await api.post("/notes/newNote", { title, content });
+export const createNote = async (title, content, createKey) => {
+  const res = await api.post("/notes/newNote", { title, content, ...(createKey ? { createKey } : {}) });
   if (res.status !== 201) {
     throw new Error("Note Creation Failed");
   }

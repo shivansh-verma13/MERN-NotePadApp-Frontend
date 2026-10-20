@@ -49,8 +49,8 @@ function App() {
     }
   }
 
-  function saveNote(title, content) {
-    return mutate("Saving note…", () => createNote(title, content), "notes");
+  function saveNote(title, content, createKey) {
+    return mutate("Saving note…", () => createNote(title, content, createKey), "notes");
   }
 
   async function deleteItem(noteID) {
