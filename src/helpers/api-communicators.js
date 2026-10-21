@@ -54,8 +54,8 @@ export const getAllUserNotes = async () => {
   return data;
 };
 
-export const deleteUserNote = async (noteID) => {
-  const res = await api.delete(`/notes/deleteNote/${noteID}`);
+export const deleteUserNote = async (noteID, expectedRevision) => {
+  const res = await api.delete(`/notes/deleteNote/${noteID}`, { data: { expectedRevision } });
   if (res.status !== 200) {
     throw new Error("Unable to Delete Note");
   }
@@ -63,8 +63,8 @@ export const deleteUserNote = async (noteID) => {
   return data;
 };
 
-export const updateUserNote = async (content, noteID) => {
-  const res = await api.patch("/notes/updateNote", { content, noteID });
+export const updateUserNote = async (content, noteID, expectedRevision) => {
+  const res = await api.patch("/notes/updateNote", { content, noteID, expectedRevision });
   if (res.status !== 200) {
     throw new Error("Unable to Update Note");
   }

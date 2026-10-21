@@ -20,6 +20,7 @@ function App() {
   const [notesStatus, setNotesStatus] = useState("loading");
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [mutation, setMutation] = useState("");
+  const [mutationError, setMutationError] = useState("");
   const pendingMutation = useRef(null);
   const session = useRef(null);
   const auth = useAuth();
@@ -36,6 +37,7 @@ function App() {
     const operation = { session: session.current };
     pendingMutation.current = operation;
     setMutation(label);
+    setMutationError("");
     try {
       const response = await request();
       if (session.current !== operation.session) throw new Error("Session changed.");
@@ -53,20 +55,23 @@ function App() {
     return mutate("Saving note…", () => createNote(title, content, createKey), "notes");
   }
 
-  async function deleteItem(noteID) {
+  async function deleteItem(noteID, expectedRevision) {
+    const requestSession = session.current;
     try {
       toast.loading("Deleting a Note...", { id: "delete-note" });
-      await mutate("Deleting note…", () => deleteUserNote(noteID), "userNotes");
+      await mutate("Deleting note…", () => deleteUserNote(noteID, expectedRevision), "userNotes");
       toast.success("Deleted a Note Successfully", { id: "delete-note" });
     } catch (error) {
+      if (session.current !== requestSession) return;
+      setMutationError(error?.response?.data?.code === "NOTE_CONFLICT" ? "This note changed in another session. It was not deleted. Copy any unsaved drafts, then reload the page to review the latest notes." : "The delete result could not be confirmed. Copy any unsaved drafts, then reload to check your notes before retrying.");
       toast.error("Note Deletion Failed", { id: "delete-note" });
     }
   }
 
-  async function updateNote(content, noteID) {
+  async function updateNote(content, noteID, expectedRevision) {
     try {
       toast.loading("Updating the Note...", { id: "update-note" });
-      await mutate("Updating note…", () => updateUserNote(content, noteID), "notes");
+      await mutate("Updating note…", () => updateUserNote(content, noteID, expectedRevision), "notes");
       toast.success("Updated Note Successfully", { id: "update-note" });
     } catch (error) {
       toast.error("Failed to Update Note", { id: "update-note" });
@@ -89,6 +94,7 @@ function App() {
     pendingMutation.current = null;
     setMutation("");
     setListItem([]);
+    setMutationError("");
     setQuery("");
     setNotesStatus("loading");
     if (!auth?.isLoggedIn) return;
@@ -125,6 +131,7 @@ function App() {
       </h1>
       {notesStatus === "ready" && <AddNote saveNote={saveNote} disabled={Boolean(mutation)} />}
       {mutation && <p role="status" aria-live="polite">{mutation} Please wait before changing another note.</p>}
+      {mutationError && <p role="alert">{mutationError}</p>}
       <section aria-labelledby="my-notes-heading" className="notes-library">
         <h2 id="my-notes-heading" className="noteHeading">My Notes</h2>
         {notesStatus === "loading" && <p role="status">Loading your notes…</p>}

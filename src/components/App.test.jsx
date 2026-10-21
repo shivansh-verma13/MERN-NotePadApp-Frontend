@@ -99,11 +99,11 @@ test("filtered edit and deletion retain note IDs and recompute matches from save
   fireEvent.change(within(dialog).getByLabelText("Content"), { target: { value: "Buy milk" } });
   fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
   await waitFor(() => expect(screen.getByText(/No notes match/)).toBeVisible());
-  expect(updateUserNote).toHaveBeenCalledWith("Buy milk", "synthetic-b");
+  expect(updateUserNote).toHaveBeenCalledWith("Buy milk", "synthetic-b", 0);
   fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "[draft]" } });
   fireEvent.click(screen.getByRole("button", { name: "Delete Literal [draft]" }));
   await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("0 of 2 notes shown"));
-  expect(deleteUserNote).toHaveBeenCalledWith("synthetic-c");
+  expect(deleteUserNote).toHaveBeenCalledWith("synthetic-c", 0);
   confirm.mockRestore();
 });
 
@@ -220,7 +220,7 @@ test("pending edits block overlapping writes and a failed edit retains content a
   expect(updateUserNote).toHaveBeenCalledTimes(1);
   expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeDisabled();
   await act(async () => editing.reject(new Error("Synthetic outage")));
-  expect(within(dialog).getByRole("alert")).toHaveTextContent("Keep editing or retry");
+  expect(within(dialog).getByRole("alert")).toHaveTextContent("Retrying uses the same revision");
   expect(within(dialog).getByLabelText("Content")).toHaveValue("Keep my changes");
   expect(deleteButton).toBeEnabled();
   fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
@@ -279,4 +279,54 @@ test('workspace forwards the same create key after an uncertain save and applies
   expect(createNote.mock.calls).toEqual([first,first]);
   expect(screen.getAllByRole('heading',{name:saved.title})).toHaveLength(1);
   expect(screen.getByLabelText('Content')).toHaveValue('');
+});
+
+
+test('stale delete submits the loaded revision, retains the library and explains recovery',async()=>{
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({userNotes:[{...fixtures[0],revision:7}]});
+  deleteUserNote.mockRejectedValueOnce({response:{status:409,data:{code:'NOTE_CONFLICT'}}});
+  const confirm=vi.spyOn(window,'confirm').mockReturnValue(true);
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button',{name:'Delete Travel plans'}));
+  expect(await screen.findByRole('alert')).toHaveTextContent('It was not deleted');
+  expect(deleteUserNote).toHaveBeenCalledWith('synthetic-a',7);
+  expect(screen.getByRole('heading',{name:'Travel plans'})).toBeVisible();
+  expect(getAllUserNotes).toHaveBeenCalledTimes(1);
+  confirm.mockRestore();
+});
+
+
+test('workspace pins a stale edit to the loaded revision and preserves its unsaved content',async()=>{
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({userNotes:[{...fixtures[0],revision:4}]});
+  updateUserNote.mockRejectedValueOnce({response:{status:409,data:{code:'NOTE_CONFLICT'}}});
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button',{name:'Edit Travel plans'}));
+  const dialog=screen.getByRole('dialog');
+  fireEvent.change(within(dialog).getByLabelText('Content'),{target:{value:'Keep this private draft'}});
+  fireEvent.click(within(dialog).getByRole('button',{name:'Save changes'}));
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('Copy it');
+  expect(updateUserNote).toHaveBeenCalledWith('Keep this private draft','synthetic-a',4);
+  expect(within(dialog).getByLabelText('Content')).toHaveValue('Keep this private draft');
+  expect(screen.getByText('Book the train')).toBeInTheDocument();
+  expect(getAllUserNotes).toHaveBeenCalledTimes(1);
+});
+
+test('reopening a successful edit starts with the saved content and new revision',async()=>{
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({userNotes:[{...fixtures[0],revision:4}]});
+  updateUserNote.mockResolvedValueOnce({notes:[{...fixtures[0],content:'Saved edit',revision:5}]}).mockResolvedValueOnce({notes:[{...fixtures[0],content:'Second edit',revision:6}]});
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button',{name:'Edit Travel plans'}));
+  let dialog=screen.getByRole('dialog');
+  fireEvent.change(within(dialog).getByLabelText('Content'),{target:{value:'Saved edit'}});
+  fireEvent.click(within(dialog).getByRole('button',{name:'Save changes'}));
+  await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button',{name:'Edit Travel plans'}));
+  dialog=screen.getByRole('dialog');
+  expect(within(dialog).getByLabelText('Content')).toHaveValue('Saved edit');
+  fireEvent.change(within(dialog).getByLabelText('Content'),{target:{value:'Second edit'}});
+  fireEvent.click(within(dialog).getByRole('button',{name:'Save changes'}));
+  await waitFor(()=>expect(updateUserNote).toHaveBeenLastCalledWith('Second edit','synthetic-a',5));
 });

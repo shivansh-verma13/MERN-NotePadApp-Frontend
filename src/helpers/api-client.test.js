@@ -17,7 +17,7 @@ beforeAll(async () => {
     request.on("end", () => {
       received = { method: request.method, headers: request.headers, body };
       if (request.url === "/slow") return;
-      const status = request.url === "/conflict" ? 409 : request.url === "/limited" ? 429 : 201;
+      const status = request.url === "/conflict" ? 409 : request.url === "/limited" ? 429 : request.url.includes("updateNote") || request.url.includes("deleteNote") ? 200 : 201;
       response.writeHead(status, { "Content-Type": "application/json", "Retry-After": "60" });
       response.end(JSON.stringify({ message: "Synthetic response" }));
     });
@@ -67,5 +67,21 @@ test('create helper transmits the retry key through the real Axios HTTP adapter'
     const createKey='1800000000000.11111111-1111-4111-8111-111111111111';
     await createNote('Synthetic','Fixture',createKey);
     expect(JSON.parse(received.body)).toEqual({title:'Synthetic',content:'Fixture',createKey});
+  } finally {api.defaults.baseURL=previousURL;api.defaults.proxy=previousProxy;}
+});
+
+
+test('edit and delete helpers serialize conditional revisions through real Axios HTTP',async()=>{
+  const {updateUserNote,deleteUserNote}=await import('./api-communicators');
+  const previousURL=api.defaults.baseURL;const previousProxy=api.defaults.proxy;
+  api.defaults.baseURL=baseURL;api.defaults.proxy=false;
+  try {
+    await updateUserNote('Synthetic edit','synthetic-note',5);
+    expect(received.method).toBe('PATCH');
+    expect(JSON.parse(received.body)).toEqual({content:'Synthetic edit',noteID:'synthetic-note',expectedRevision:5});
+    await deleteUserNote('synthetic-note',6);
+    expect(received.method).toBe('DELETE');
+    expect(JSON.parse(received.body)).toEqual({expectedRevision:6});
+    expect(received.headers['x-notes-request']).toBe('1');
   } finally {api.defaults.baseURL=previousURL;api.defaults.proxy=previousProxy;}
 });

@@ -31,11 +31,12 @@ function Note(notes) {
       {!hideDialog && (
         <UpdateNoteDialog
           open={open}
-          setOpen={setOpen}
+          setOpen={value => { setOpen(value); if (!value) setHideDialog(true); }}
           text={notes.listItem.content}
           title={notes.listItem.title}
           updateNote={notes.updateNote}
           noteID={notes.listItem._id.toString()}
+          expectedRevision={notes.listItem.revision ?? 0}
           disabled={notes.disabled}
         />
       )}
@@ -71,7 +72,7 @@ function Note(notes) {
             type="button"
             disabled={notes.disabled}
             onClick={() => {
-              if (window.confirm("Delete this note? This cannot be undone.")) notes.deleteItem(notes.listItem._id.toString());
+              if (window.confirm("Delete this note? This cannot be undone.")) notes.deleteItem(notes.listItem._id.toString(), notes.listItem.revision ?? 0);
             }}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
