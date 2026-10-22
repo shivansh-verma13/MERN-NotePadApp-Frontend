@@ -45,8 +45,8 @@ export const createNote = async (title, content, createKey) => {
   return data;
 };
 
-export const getAllUserNotes = async () => {
-  const res = await api.get("/notes/all-notes");
+export const getAllUserNotes = async (signal) => {
+  const res = await api.get("/notes/all-notes", { signal });
   if (res.status !== 200) {
     throw new Error("No Notes Available");
   }

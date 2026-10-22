@@ -35,6 +35,7 @@ function Note(notes) {
           text={notes.listItem.content}
           title={notes.listItem.title}
           updateNote={notes.updateNote}
+          loadLatestNote={notes.loadLatestNote}
           noteID={notes.listItem._id.toString()}
           expectedRevision={notes.listItem.revision ?? 0}
           disabled={notes.disabled}

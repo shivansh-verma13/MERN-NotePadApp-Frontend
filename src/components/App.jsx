@@ -55,6 +55,23 @@ function App() {
     return mutate("Saving note…", () => createNote(title, content, createKey), "notes");
   }
 
+  async function loadLatestNote(noteID, signal) {
+    const requestSession = session.current;
+    if (!requestSession || pendingMutation.current) throw new Error("Wait for the current change.");
+    const response = await getAllUserNotes(signal);
+    if (signal.aborted || session.current !== requestSession) throw new Error("Session changed.");
+    if (!Array.isArray(response.userNotes)) throw new Error("Invalid notes response.");
+    const note = response.userNotes.find(item => item?._id === noteID);
+    if (!note) return null;
+    const revision = note.revision ?? 0;
+    if (typeof note.title !== "string" || typeof note.content !== "string" ||
+        !Number.isSafeInteger(revision) || revision < 0 || revision >= Number.MAX_SAFE_INTEGER) {
+      throw new Error("Invalid note response.");
+    }
+    // A comparison read must never replace the library or unmount an unsaved draft.
+    return { title: note.title, content: note.content, revision };
+  }
+
   async function deleteItem(noteID, expectedRevision) {
     const requestSession = session.current;
     try {
@@ -161,6 +178,7 @@ function App() {
                 listItem={listItem}
                 deleteItem={deleteItem}
                 updateNote={updateNote}
+                loadLatestNote={loadLatestNote}
                 disabled={Boolean(mutation)}
               />
             );

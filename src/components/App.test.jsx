@@ -330,3 +330,72 @@ test('reopening a successful edit starts with the saved content and new revision
   fireEvent.click(within(dialog).getByRole('button',{name:'Save changes'}));
   await waitFor(()=>expect(updateUserNote).toHaveBeenLastCalledWith('Second edit','synthetic-a',5));
 });
+
+async function openConflictedDraft() {
+  fireEvent.click(await screen.findByRole('button',{name:'Edit Travel plans'}));
+  const dialog=screen.getByRole('dialog');
+  fireEvent.change(within(dialog).getByLabelText('Content'),{target:{value:'Retained owner draft'}});
+  fireEvent.click(within(dialog).getByRole('button',{name:'Save changes'}));
+  await within(dialog).findByRole('alert');
+  return dialog;
+}
+
+test('comparison uses authenticated reads without replacing the library and saves only after explicit choice',async()=>{
+  authenticated();
+  const original={...fixtures[0],revision:4};
+  const latest={...original,title:'Remote title',content:'Remote content',revision:5};
+  getAllUserNotes.mockResolvedValueOnce({userNotes:[original]}).mockResolvedValueOnce({userNotes:[latest]});
+  updateUserNote.mockRejectedValueOnce({response:{status:409,data:{code:'NOTE_CONFLICT'}}})
+    .mockResolvedValueOnce({notes:[{...latest,content:'Combined by owner',revision:6}]});
+  render(<App />);
+  const dialog=await openConflictedDraft();
+  fireEvent.click(within(dialog).getByRole('button',{name:'Compare latest saved note'}));
+  expect(await within(dialog).findByLabelText('Latest saved content')).toHaveValue('Remote content');
+  expect(screen.getByText('Book the train')).toBeInTheDocument();
+  expect(within(dialog).getByLabelText('Content')).toHaveValue('Retained owner draft');
+  expect(updateUserNote).toHaveBeenCalledTimes(1);
+  expect(getAllUserNotes.mock.calls[1][0].aborted).toBe(false);
+  fireEvent.click(within(dialog).getByRole('button',{name:'Continue editing my draft'}));
+  fireEvent.change(within(dialog).getByLabelText('Content'),{target:{value:'Combined by owner'}});
+  fireEvent.click(within(dialog).getByRole('button',{name:'Save changes'}));
+  await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(updateUserNote).toHaveBeenLastCalledWith('Combined by owner','synthetic-a',5);
+  expect(screen.getByRole('heading',{name:'Remote title'})).toBeVisible();
+  expect(screen.getByText('Combined by owner')).toBeVisible();
+});
+
+test.each([
+  ['deleted',{userNotes:[]},/no longer available/],
+  ['malformed revision',{userNotes:[{...fixtures[0],revision:-1}]},/could not be loaded/],
+  ['malformed content',{userNotes:[{...fixtures[0],content:null,revision:5}]},/could not be loaded/],
+  ['malformed library',{userNotes:null},/could not be loaded/],
+])('a %s comparison keeps the workspace and draft intact',async(label,response,message)=>{
+  authenticated();
+  getAllUserNotes.mockResolvedValueOnce({userNotes:[{...fixtures[0],revision:4}]}).mockResolvedValueOnce(response);
+  updateUserNote.mockRejectedValueOnce({response:{status:409,data:{code:'NOTE_CONFLICT'}}});
+  render(<App />);const dialog=await openConflictedDraft();
+  fireEvent.click(within(dialog).getByRole('button',{name:'Compare latest saved note'}));
+  await within(dialog).findByText(message);
+  expect(within(dialog).getByLabelText('Content')).toHaveValue('Retained owner draft');
+  expect(within(dialog).getByRole('button',{name:'Save changes'})).toBeDisabled();
+  expect(screen.getByText('Book the train')).toBeInTheDocument();
+  expect(updateUserNote).toHaveBeenCalledTimes(1);
+});
+
+test('an old-session comparison is cancelled and cannot expose the previous owner snapshot',async()=>{
+  authenticated();const comparison=deferred();
+  getAllUserNotes.mockResolvedValueOnce({userNotes:[{...fixtures[0],revision:4}]}).mockReturnValueOnce(comparison.promise)
+    .mockResolvedValueOnce({userNotes:[]});
+  updateUserNote.mockRejectedValueOnce({response:{status:409,data:{code:'NOTE_CONFLICT'}}});
+  const {rerender}=render(<App />);const dialog=await openConflictedDraft();
+  fireEvent.click(within(dialog).getByRole('button',{name:'Compare latest saved note'}));
+  const signal=getAllUserNotes.mock.calls[1][0];
+  useAuth.mockReturnValue({status:'authenticated',isLoggedIn:true,username:'Different synthetic owner'});
+  rerender(<App />);
+  await screen.findByText(/No notes yet/);
+  expect(signal.aborted).toBe(true);
+  await act(async()=>comparison.resolve({userNotes:[{...fixtures[0],content:'Private previous-owner content',revision:5}]}));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.queryByDisplayValue('Private previous-owner content')).not.toBeInTheDocument();
+  expect(screen.queryByText('Book the train')).not.toBeInTheDocument();
+});

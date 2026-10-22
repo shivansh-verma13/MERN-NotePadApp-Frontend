@@ -16,14 +16,30 @@ beforeAll(async () => {
     request.on("data", chunk => { body += chunk; });
     request.on("end", () => {
       received = { method: request.method, headers: request.headers, body };
-      if (request.url === "/slow") return;
-      const status = request.url === "/conflict" ? 409 : request.url === "/limited" ? 429 : request.url.includes("updateNote") || request.url.includes("deleteNote") ? 200 : 201;
+      if (request.url === "/slow" || request.url.startsWith("/hold/")) return;
+      const status = request.url === "/conflict" ? 409 : request.url === "/limited" ? 429 : request.url.includes("updateNote") || request.url.includes("deleteNote") || request.url.includes("all-notes") ? 200 : 201;
       response.writeHead(status, { "Content-Type": "application/json", "Retry-After": "60" });
       response.end(JSON.stringify({ message: "Synthetic response" }));
     });
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   baseURL = `http://127.0.0.1:${server.address().port}`;
+});
+
+test('comparison read helper preserves the existing GET contract and propagates cancellation',async()=>{
+  const {getAllUserNotes}=await import('./api-communicators');
+  const previousURL=api.defaults.baseURL;const previousProxy=api.defaults.proxy;
+  api.defaults.baseURL=baseURL;api.defaults.proxy=false;
+  try {
+    await getAllUserNotes();
+    expect(received.method).toBe('GET');
+    expect(received.headers['x-notes-request']).toBe('1');
+    api.defaults.baseURL=baseURL+'/hold';
+    const controller=new AbortController();
+    const request=getAllUserNotes(controller.signal);
+    controller.abort();
+    await expect(request).rejects.toMatchObject({code:'ERR_CANCELED'});
+  } finally {api.defaults.baseURL=previousURL;api.defaults.proxy=previousProxy;}
 });
 
 afterAll(async () => {
