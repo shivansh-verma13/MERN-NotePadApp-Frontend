@@ -20,7 +20,8 @@
     "lint": "eslint src/components/AddNote.jsx src/components/Dialog.jsx src/components/Note.jsx src/components/App.jsx src/components/SignUp.jsx src/components/AddNote.test.jsx src/components/Dialog.test.jsx src/components/App.test.jsx src/components/SignUp.test.jsx src/context/AuthContext.jsx src/context/AuthContext.test.jsx src/helpers/api-client.js src/helpers/api-client.test.js src/helpers/api-communicators.js src/index.jsx src/routes.jsx src/routes.test.jsx src/test/setup.js vitest.config.mjs vite.config.mjs eslint.config.mjs scripts/verify-toolchain.mjs --max-warnings 0",
     "dev": "vite",
     "preview": "vite preview",
-    "test:toolchain": "node scripts/verify-toolchain.mjs"
+    "test:toolchain": "node scripts/verify-toolchain.mjs",
+    "test:proxy": "node --test scripts/notes-proxy.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

@@ -20,6 +20,16 @@ try {
   assert.equal(defaults.server.strictPort, true);
   assert.equal(defaults.define["process.env"], undefined);
 
+  // This checks the shipped routing contract, not Netlify's live proxy behavior.
+  const redirects = (await readFile("public/_redirects", "utf8")).trim().split(/\r?\n/)
+    .filter(line => line.trim() && !line.trim().startsWith("#"))
+    .map(line => line.trim().split(/\s+/));
+  assert.deepEqual(redirects, [
+    ["/*", "/index.html", "200"],
+  ], "only SPA fallback is declared; API belongs to the authenticated function route");
+  const { config: proxyRoute } = await import("../netlify/functions/notes-proxy.mjs");
+  assert.equal(proxyRoute.path, "/notepad/*");
+
   process.env.REACT_APP_API_URL = marker;
   process.env.VITE_PRIVATE_VERIFICATION = privateMarker;
   const configured = await resolveConfig({}, "build");
