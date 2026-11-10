@@ -16,17 +16,28 @@ export function createProxy({ secret, fetchImpl = fetch, now = Date.now } = {}) 
     }
     let body;
     if (request.body) {
-      const reader = request.body.getReader();
-      const chunks = [];
-      let size = 0;
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        size += value.length;
-        if (size > MAX_BODY) { await reader.cancel(); return jsonError("Invalid request body", 413); }
-        chunks.push(value);
+      try {
+        const reader = request.body.getReader();
+        const chunks = [];
+        let size = 0;
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            size += value.length;
+            if (size > MAX_BODY) {
+              void reader.cancel().catch(() => {});
+              return jsonError("Invalid request body", 413);
+            }
+            chunks.push(value);
+          }
+        } finally {
+          reader.releaseLock();
+        }
+        body = Buffer.concat(chunks);
+      } catch {
+        return jsonError("Unable to read request body. Please retry.", 400);
       }
-      body = Buffer.concat(chunks);
     }
     const headers = new Headers();
     for (const name of ["Accept", "Content-Type", "Cookie", "Origin", "X-Notes-Request", "Access-Control-Request-Method", "Access-Control-Request-Headers"]) {

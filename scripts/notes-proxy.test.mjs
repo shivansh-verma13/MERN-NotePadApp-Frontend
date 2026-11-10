@@ -19,6 +19,7 @@ test("proxy signs the platform IP, preserves API cookies and never trusts client
   assert.equal(forwarded.headers.get("X-Notes-Client-IP"), "192.0.2.5");
   assert.equal(forwarded.headers.get("X-Forwarded-For"), null);
   assert.equal(forwarded.headers.get("Cookie"), "synthetic=old");
+  assert.equal(forwarded.body.toString("utf8"), "{}");
   assert.equal(forwarded.headers.get("X-Notes-Proxy-Signature"), createHmac("sha256", secret)
     .update(JSON.stringify([String(now), "192.0.2.5", "POST", "/notepad/user/login?mode=test"])).digest("hex"));
   assert.match(response.headers.get("Set-Cookie"), /HttpOnly/);
@@ -40,4 +41,26 @@ test("proxy fails closed on configuration, oversize bodies, redirects and transp
   const failed = await unavailable(req(), { ip: "192.0.2.1" });
   assert.equal(failed.status, 502);
   assert.doesNotMatch(await failed.text(), /private transport/);
+});
+
+test("proxy rejects an interrupted upload without forwarding its partial body", async () => {
+  let reads = 0;
+  const body = new ReadableStream({
+    pull(controller) {
+      if (++reads === 1) controller.enqueue(new TextEncoder().encode('{"title":'));
+      else controller.error(new Error("private upload detail"));
+    },
+  });
+  let calls = 0;
+  const proxy = createProxy({
+    secret: randomBytes(32).toString("hex"),
+    fetchImpl: async () => { calls++; return new Response(); },
+  });
+  const response = await proxy(new Request("https://notes.example.test/notepad/notes/newNote", {
+    method: "POST", body, duplex: "half",
+  }), { ip: "192.0.2.1" });
+  assert.equal(response.status, 400);
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.deepEqual(await response.json(), { message: "Unable to read request body. Please retry." });
+  assert.equal(calls, 0);
 });
